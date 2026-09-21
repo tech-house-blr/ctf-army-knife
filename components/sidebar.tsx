@@ -16,7 +16,7 @@ export default function Sidebar() {
 
     return (
         <aside
-            className={`fixed inset-y-0 left-0 z-20 ${collapsed ? "w-10" : "w-64"} ${collapsed ? "" : "border-r-2 border-amber-300"}`}
+            className={`fixed inset-y-0 left-0 ${collapsed ? "w-10" : "w-64"} ${collapsed ? "" : "border-r-2 border-amber-300"} z-20 bg-stone-800`}
         >
             <button
                 onClick={() => setIsCollapsed(!collapsed)}

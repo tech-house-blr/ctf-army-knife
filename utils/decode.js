@@ -1,0 +1,2023 @@
+export class Base64 {
+    static #alphabet =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    static #ignoredCharacters = " \f\n\r\t\u00a0\u2028\u2029";
+
+    static #decoder = Base64.#createDecoder();
+
+    static ARMOR_PATTERN =
+        /-----BEGIN [^-]+-----(?:\r?\n[^\s]*:[^\r\n]*)*\r?\n\r?\n([A-Za-z0-9+/=\s]+)-----END [^-]+-----|begin-base64[^\r\n]+\r?\n([A-Za-z0-9+/=\s]+)====/;
+
+    static #createDecoder() {
+        const decoder = new Map();
+
+        for (const [value, character] of [...Base64.#alphabet].entries()) {
+            decoder.set(character, value);
+        }
+
+        for (const character of Base64.#ignoredCharacters) {
+            decoder.set(character, -1);
+        }
+
+        return decoder;
+    }
+
+    static decode(input) {
+        if (typeof input !== "string") {
+            throw new TypeError("Base64 input must be a string");
+        }
+
+        const output = [];
+        let bits = 0;
+        let characterCount = 0;
+
+        for (let offset = 0; offset < input.length; offset += 1) {
+            const character = input.charAt(offset);
+
+            if (character === "=") {
+                break;
+            }
+
+            const value = Base64.#decoder.get(character);
+
+            if (value === -1) {
+                continue;
+            }
+            if (value === undefined) {
+                throw new SyntaxError(
+                    `Illegal Base64 character at offset ${offset}`,
+                );
+            }
+
+            bits |= value;
+            characterCount += 1;
+
+            if (characterCount >= 4) {
+                output.push(bits >> 16, (bits >> 8) & 0xff, bits & 0xff);
+                bits = 0;
+                characterCount = 0;
+            } else {
+                bits <<= 6;
+            }
+        }
+
+        switch (characterCount) {
+            case 1:
+                throw new SyntaxError(
+                    "Incomplete Base64 encoding: at least two bits are missing",
+                );
+            case 2:
+                output.push(bits >> 10);
+                break;
+            case 3:
+                output.push(bits >> 16, (bits >> 8) & 0xff);
+                break;
+        }
+
+        return Uint8Array.from(output);
+    }
+
+    static unarmor(input) {
+        if (typeof input !== "string") {
+            throw new TypeError("ASCII-armored input must be a string");
+        }
+
+        const match = Base64.ARMOR_PATTERN.exec(input);
+
+        if (!match) {
+            return Base64.decode(input);
+        }
+
+        const payload = match[1] ?? match[2];
+
+        if (payload === undefined) {
+            throw new SyntaxError("ASCII armor pattern is out of sync");
+        }
+
+        return Base64.decode(payload);
+    }
+}
+
+export class LookupResult {
+    #label;
+    #critical;
+    #raw;
+
+    constructor(label, id, critical = false, raw = id) {
+        this.#label = label;
+        this.#critical = critical;
+        this.#raw = raw;
+        this.id = id;
+    }
+
+    toString() {
+        const criticalSuffix = this.#critical
+            ? `* (critical: 0x${this.#raw.toString(16)})`
+            : "";
+
+        return `${this.#label || "undefined"} (0x${this.id.toString(16)})${criticalSuffix}`;
+    }
+
+    toJSON() {
+        return this.toString();
+    }
+}
+
+export class Stream {
+    constructor(bytes, start = 0, end = bytes.length) {
+        if (typeof bytes?.slice !== "function") {
+            throw new TypeError("Stream requires an array-like byte source");
+        }
+        if (!Number.isInteger(start) || !Number.isInteger(end)) {
+            throw new TypeError("Stream boundaries must be integers");
+        }
+        if (start < 0 || end < start || end > bytes.length) {
+            throw new RangeError("Invalid Stream boundaries");
+        }
+
+        this.bytes = bytes;
+        this.start = start;
+        this.end = end;
+        this.lengthHeaders = [];
+        this.pos = start;
+    }
+
+    remaining() {
+        return this.end - this.pos;
+    }
+
+    toArray() {
+        return this.bytes.slice(this.start, this.end);
+    }
+
+    octet() {
+        if (this.pos >= this.end) {
+            return Number.NaN;
+        }
+
+        while (this.pos === this.lengthHeaders[0]) {
+            this.pos += 1;
+            this.lengthHeaders.shift();
+        }
+
+        return this.bytes[this.pos++];
+    }
+
+    uint(length) {
+        let result = 0;
+
+        for (let index = 0; index < length; index += 1) {
+            result = result * 256 + this.octet();
+        }
+
+        return result;
+    }
+
+    uint16() {
+        return this.uint(2);
+    }
+
+    uint32() {
+        return this.uint(4);
+    }
+
+    time() {
+        const timestamp = this.uint32();
+        return timestamp > 0 ? new Date(timestamp * 1000) : "never";
+    }
+
+    hex(length) {
+        let output = "";
+
+        for (let index = 0; index < length; index += 1) {
+            output += this.octet().toString(16).padStart(2, "0");
+        }
+
+        return output;
+    }
+
+    utf8(length) {
+        const bytes = Uint8Array.from({ length }, () => this.octet());
+
+        return new TextDecoder().decode(bytes);
+    }
+
+    multiPrecisionInteger() {
+        const bitLength = this.uint16();
+        const byteLength = Math.ceil(bitLength / 8);
+        return this.hex(byteLength);
+    }
+
+    // RFC 4880, section 3.7.1.3.
+    iterationCount() {
+        const codedCount = this.octet();
+        return (16 + (codedCount & 15)) << ((codedCount >> 4) + 6);
+    }
+
+    // RFC 4880, sections 4.2.2 and 5.2.3.1.
+    variableLengthLength(supportPartial = false, mark = false) {
+        let length = this.octet();
+
+        if (mark) {
+            this.lengthHeaders.push(this.pos - 1);
+        }
+
+        if (length < 192) {
+            return length;
+        }
+
+        if (length < (supportPartial ? 224 : 255)) {
+            length = ((length - 192) << 8) + this.octet() + 192;
+
+            if (mark) {
+                this.lengthHeaders.push(this.pos - 1);
+            }
+
+            return length;
+        }
+
+        if (length < 255) {
+            const nextChunkLength = 1 << (length & 0x1f);
+            const currentPosition = this.pos;
+
+            this.pos += nextChunkLength + 1;
+            const remainingLength = this.variableLengthLength(
+                supportPartial,
+                true,
+            );
+            this.pos = currentPosition;
+
+            return nextChunkLength + remainingLength;
+        }
+
+        length = this.uint32();
+
+        if (mark) {
+            this.lengthHeaders.push(
+                this.pos - 1,
+                this.pos - 2,
+                this.pos - 3,
+                this.pos - 4,
+            );
+        }
+
+        return length;
+    }
+
+    subParse(length, callback) {
+        const previousEnd = this.end;
+        const previousStart = this.start;
+
+        try {
+            this.start = this.pos;
+            this.end = this.pos + length;
+            callback();
+
+            const hasUnparsedData = this.pos !== this.end;
+
+            if (hasUnparsedData) {
+                this.pos = this.end;
+            }
+
+            return hasUnparsedData;
+        } finally {
+            this.start = previousStart;
+            this.end = previousEnd;
+        }
+    }
+
+    lookup(table) {
+        const id = this.octet();
+        return new LookupResult(table[id], id);
+    }
+
+    lookupCritical(table) {
+        const raw = this.octet();
+        const critical = Boolean(raw & 0x80);
+        const normalized = raw & ~0x80;
+
+        return new LookupResult(table[normalized], normalized, critical, raw);
+    }
+
+    lookupArray(table, length) {
+        return Array.from({ length }, () => this.lookup(table));
+    }
+
+    lookupFlags(table, byteLength) {
+        const flags = this.uint(byteLength);
+        const results = [];
+        const flagLimit = 2 ** (byteLength * 8);
+
+        for (let flag = 1; flag < flagLimit; flag *= 2) {
+            if (flags & flag) {
+                results.push(new LookupResult(table[flag], flag));
+            }
+        }
+
+        return results;
+    }
+}
+
+export class Packet {
+    #Hex;
+    #LookupResult;
+
+    constructor(
+        stream,
+        { Hex, LookupResult: LookupResultClass = LookupResult } = {},
+    ) {
+        if (!stream) {
+            throw new TypeError("Packet requires a stream");
+        }
+        if (typeof Hex?.encodePretty !== "function") {
+            throw new TypeError("Packet requires Hex.encodePretty()");
+        }
+        if (typeof LookupResultClass !== "function") {
+            throw new TypeError("Packet requires a LookupResult constructor");
+        }
+
+        this.stream = stream;
+        this.#Hex = Hex;
+        this.#LookupResult = LookupResultClass;
+    }
+
+    static TAGS = {
+        0: "Reserved - a packet tag MUST NOT have this value",
+        1: "Public Key Encrypted Session Key Packet",
+        2: "Signature Packet",
+        3: "Symmetric-Key Encrypted Session Key Packet",
+        4: "One-Pass Signature Packet",
+        5: "Secret Key Packet",
+        6: "Public Key Packet",
+        7: "Secret Subkey Packet",
+        8: "Compressed Data Packet",
+        9: "Symmetrically Encrypted Data Packet",
+        10: "Marker Packet",
+        11: "Literal Data Packet",
+        12: "Trust Packet",
+        13: "User ID Packet",
+        14: "Public Subkey Packet",
+        17: "User Attribute Packet",
+        18: "Sym. Encrypted and Integrity Protected Data Packet",
+        19: "Reserved (formerly Modification Detection Code Packet)",
+        20: "Reserved",
+        21: "Padding Packet",
+    };
+
+    static PUBLIC_KEY_ALGORITHMS = {
+        0: "Reserved",
+        1: "RSA (Encrypt or Sign)", // [FIPS186]
+        2: "RSA Encrypt-Only", // [FIPS186]
+        3: "RSA Sign-Only", // [FIPS186]
+        16: "Elgamal (Encrypt-Only)", // [ELGAMAL]
+        17: "DSA (Digital Signature Algorithm)", // [FIPS186]
+        18: "ECDH public key algorithm",
+        19: "ECDSA public key algorithm", // [FIPS186]
+        20: "Reserved (formerly Elgamal Encrypt or Sign)",
+        21: "Reserved for Diffie-Hellman (X9.42, as defined for IETF-S/MIME)",
+        22: "EdDSALegacy (deprecated)",
+        23: "Reserved (AEDH)",
+        24: "Reserved (AEDSA)",
+        25: "X25519",
+        26: "X448",
+        27: "Ed25519",
+        28: "Ed448",
+        100: "Private or Experimental Use",
+        101: "Private or Experimental Use",
+        102: "Private or Experimental Use",
+        103: "Private or Experimental Use",
+        104: "Private or Experimental Use",
+        105: "Private or Experimental Use",
+        106: "Private or Experimental Use",
+        107: "Private or Experimental Use",
+        108: "Private or Experimental Use",
+        109: "Private or Experimental Use",
+        110: "Private or Experimental Use",
+    };
+
+    static SYMMETRIC_KEY_ALGORITHMS = {
+        0: "Plaintext or unencrypted data",
+        1: "IDEA", // [IDEA]
+        2: "TripleDES (or DES-EDE) with 168-bit key derived from 192", // [SP800-67]
+        3: "CAST5 with 128-bit key", // [RFC2144]
+        4: "Blowfish with 128-bit key, 16 rounds", // [BLOWFISH]
+        5: "Reserved",
+        6: "Reserved",
+        7: "AES with 128-bit key", // [AES]
+        8: "AES with 192-bit key",
+        9: "AES with 256-bit key",
+        10: "Twofish with 256-bit key", // [TWOFISH]
+        11: "Camellia with 128-bit key", // [RFC3713]
+        12: "Camellia with 192-bit key",
+        13: "Camellia with 256-bit key",
+        100: "Private or Experimental Use",
+        101: "Private or Experimental Use",
+        102: "Private or Experimental Use",
+        103: "Private or Experimental Use",
+        104: "Private or Experimental Use",
+        105: "Private or Experimental Use",
+        106: "Private or Experimental Use",
+        107: "Private or Experimental Use",
+        108: "Private or Experimental Use",
+        109: "Private or Experimental Use",
+        110: "Private or Experimental Use",
+        253: "Reserved to avoid collision with Secret Key Encryption",
+        254: "Reserved to avoid collision with Secret Key Encryption",
+        255: "Reserved to avoid collision with Secret Key Encryption",
+    };
+
+    static SECRET_KEY_ALGORITHM_BLOCK_SIZES = {
+        1: 8, // "IDEA [IDEA]",
+        2: 8, // "TripleDES (or DES-EDE) with 168-bit key derived from 192", // [SP800-67]
+        3: 8, // "CAST5 with 128-bit key", // [RFC2144]
+        4: 8, // "Blowfish with 128-bit key, 16 rounds", //  [BLOWFISH]
+        7: 16, // "AES with 128-bit key", // [AES]
+        8: 16, // "AES with 192-bit key",
+        9: 16, // "AES with 256-bit key",
+        10: 16, // "Twofish with 256-bit key", // [TWOFISH]
+        11: 16, // "Camellia with 128-bit key", // [RFC3713]
+        12: 16, // "Camellia with 192-bit key",
+        13: 16, // "Camellia with 256-bit key",
+    };
+
+    static AEAD_ALGORITHMS = {
+        0: "Reserved",
+        1: "EAX", // [EAX]
+        2: "OCB", // [RFC7253]
+        3: "GCM", // [SP800-38D]
+        100: "Private or Experimental Use",
+        101: "Private or Experimental Use",
+        102: "Private or Experimental Use",
+        103: "Private or Experimental Use",
+        104: "Private or Experimental Use",
+        105: "Private or Experimental Use",
+        106: "Private or Experimental Use",
+        107: "Private or Experimental Use",
+        108: "Private or Experimental Use",
+        109: "Private or Experimental Use",
+        110: "Private or Experimental Use",
+    };
+
+    static AEAD_IV_LENGTHS = {
+        1: 16, // "EAX", // [EAX]
+        2: 15, // "OCB", // [RFC7253]
+        3: 12, // "GCM", // [SP800-38D]
+    };
+
+    static AEAD_AUTHENTICATION_TAG_LENGTHS = {
+        1: 16, // "EAX", // [EAX]
+        2: 16, // "OCB", // [RFC7253]
+        3: 16, // "GCM", // [SP800-38D]
+    };
+
+    static COMPRESSION_ALGORITHMS = {
+        0: "Uncompressed",
+        1: "ZIP", // [RFC1951]
+        2: "ZLIB", // [RFC1950]
+        3: "BZip2", // [BZ2]
+        100: "Private or Experimental Use",
+        101: "Private or Experimental Use",
+        102: "Private or Experimental Use",
+        103: "Private or Experimental Use",
+        104: "Private or Experimental Use",
+        105: "Private or Experimental Use",
+        106: "Private or Experimental Use",
+        107: "Private or Experimental Use",
+        108: "Private or Experimental Use",
+        109: "Private or Experimental Use",
+        110: "Private or Experimental Use",
+    };
+
+    static HASH_ALGORITHMS = {
+        0: "Reserved",
+        1: "MD5", // [RFC1321]
+        2: "SHA1", // [FIPS180]
+        3: "RIPEMD160", // [RIPEMD-160]
+        4: "Reserved",
+        5: "Reserved",
+        6: "Reserved",
+        7: "Reserved",
+        8: "SHA2-256", // [FIPS180]
+        9: "SHA2-384", // [FIPS180]
+        10: "SHA2-512", // [FIPS180]
+        11: "SHA2-224", // [FIPS180]
+        12: "SHA3-256", // [FIPS202]
+        13: "Reserved",
+        14: "SHA3-512", // [FIPS202]
+        100: "Private or Experimental Use",
+        101: "Private or Experimental Use",
+        102: "Private or Experimental Use",
+        103: "Private or Experimental Use",
+        104: "Private or Experimental Use",
+        105: "Private or Experimental Use",
+        106: "Private or Experimental Use",
+        107: "Private or Experimental Use",
+        108: "Private or Experimental Use",
+        109: "Private or Experimental Use",
+        110: "Private or Experimental Use",
+    };
+
+    static HASH_SALT_SIZES = {
+        8: 16, // "SHA2-256", // [FIPS180]
+        9: 24, // "SHA2-384", // [FIPS180]
+        10: 32, // "SHA2-512", // [FIPS180]
+        11: 16, // "SHA2-224", // [FIPS180]
+        12: 16, // "SHA3-256", // [FIPS202]
+        14: 32, // "SHA3-512", // [FIPS202]
+        100: -1, // "Private or Experimental Use",
+        101: -1, // "Private or Experimental Use",
+        102: -1, // "Private or Experimental Use",
+        103: -1, // "Private or Experimental Use",
+        104: -1, // "Private or Experimental Use",
+        105: -1, // "Private or Experimental Use",
+        106: -1, // "Private or Experimental Use",
+        107: -1, // "Private or Experimental Use",
+        108: -1, // "Private or Experimental Use",
+        109: -1, // "Private or Experimental Use",
+        110: -1, // "Private or Experimental Use",
+    };
+
+    static SIGNATURE_TYPES = {
+        0: "Signature of a binary document.",
+        1: "Signature of a canonical text document.",
+        2: "Standalone signature.",
+        16: "Generic certification of a User ID and Public-Key packet.",
+        17: "Persona certification of a User ID and Public-Key packet.",
+        18: "Casual certification of a User ID and Public-Key packet.",
+        19: "Positive certification of a User ID and Public-Key packet.",
+        24: "Subkey Binding Signature",
+        25: "Primary Key Binding Signature",
+        31: "Direct Key Signature",
+        32: "Key revocation signature",
+        40: "Subkey revocation signature",
+        48: "Certification revocation signature",
+        64: "Timestamp signature.",
+        80: "Third-Party Confirmation signature.",
+        255: "Reserved",
+    };
+
+    static SIGNATURE_SUBPACKET_TYPES = {
+        0: "Reserved",
+        1: "Reserved",
+        2: "Signature Creation Time",
+        3: "Signature Expiration Time",
+        4: "Exportable Certification",
+        5: "Trust Signature",
+        6: "Regular Expression",
+        7: "Revocable",
+        8: "Reserved",
+        9: "Key Expiration Time",
+        10: "Placeholder for backward compatibility",
+        11: "Preferred Symmetric Ciphers for v1 SEIPD",
+        12: "Revocation Key (deprecated)",
+        13: "Reserved",
+        14: "Reserved",
+        15: "Reserved",
+        16: "Issuer",
+        17: "Reserved",
+        18: "Reserved",
+        19: "Reserved",
+        20: "Notation Data",
+        21: "Preferred Hash Algorithms",
+        22: "Preferred Compression Algorithms",
+        23: "Key Server Preferences",
+        24: "Preferred Key Server",
+        25: "Primary User ID",
+        26: "Policy URI",
+        27: "Key Flags",
+        28: "Signer's User ID",
+        29: "Reason for Revocation",
+        30: "Features",
+        31: "Signature Target",
+        32: "Embedded Signature",
+        33: "Issuer Fingerprint",
+        34: "Reserved (Formerly Preferred AEAD Algorithms)",
+        35: "Intended Recipient Fingerprint",
+        37: "Reserved (Attested Certifications)",
+        38: "Reserved (Key Block)",
+        39: "Preferred AEAD Ciphersuites",
+        100: "Private or Experimental Use",
+        101: "Private or Experimental Use",
+        102: "Private or Experimental Use",
+        103: "Private or Experimental Use",
+        104: "Private or Experimental Use",
+        105: "Private or Experimental Use",
+        106: "Private or Experimental Use",
+        107: "Private or Experimental Use",
+        108: "Private or Experimental Use",
+        109: "Private or Experimental Use",
+        110: "Private or Experimental Use",
+    };
+
+    static KEYSERVER_PREFERENCES = {
+        128: "No-modify",
+    };
+
+    static KEY_FLAGS = {
+        0x01: "certify",
+        0x02: "sign",
+        0x04: "encrypt communications",
+        0x08: "encrypt storage",
+        0x10: "split key",
+        0x20: "authentication",
+        0x80: "shared key",
+        0x4000: "reserved (ASDK)",
+        0x8000: "reserved (timestamping)",
+    };
+
+    static KEY_FEATURES = {
+        1: "Modification detection v1",
+        2: "Reserved",
+        4: "Reserved",
+        8: "Modification detection v2",
+    };
+
+    static STRING_TO_KEY_USAGES = {
+        ...Packet.SYMMETRIC_KEY_ALGORITHMS,
+        253: "AEAD",
+        254: "CFB",
+        255: "MalleableCFB",
+    };
+
+    static STRING_TO_KEY_SPECIFIERS = {
+        0: "Simple S2K",
+        1: "Salted S2K",
+        2: "Reserved value",
+        3: "Iterated and Salted S2K",
+        4: "Argon2",
+        100: "Private or Experimental Use",
+        101: "Private or Experimental Use",
+        102: "Private or Experimental Use",
+        103: "Private or Experimental Use",
+        104: "Private or Experimental Use",
+        105: "Private or Experimental Use",
+        106: "Private or Experimental Use",
+        107: "Private or Experimental Use",
+        108: "Private or Experimental Use",
+        109: "Private or Experimental Use",
+        110: "Private or Experimental Use",
+    };
+
+    static STRING_TO_KEY_SPECIFIER_FIELD_SIZES = {
+        0: 2, // "Simple S2K",
+        1: 10, // "Salted S2K",
+        3: 11, // "Iterated and Salted S2K",
+        4: 20, // "Argon2",
+        100: -1, // "Private or Experimental Use",
+        101: -1, // "Private or Experimental Use",
+        102: -1, // "Private or Experimental Use",
+        103: -1, // "Private or Experimental Use",
+        104: -1, // "Private or Experimental Use",
+        105: -1, // "Private or Experimental Use",
+        106: -1, // "Private or Experimental Use",
+        107: -1, // "Private or Experimental Use",
+        108: -1, // "Private or Experimental Use",
+        109: -1, // "Private or Experimental Use",
+        110: -1, // "Private or Experimental Use",
+    };
+
+    static LITERAL_DATA_FORMATS = {
+        0x01: "local", // deprecated value for machine local conversions
+        0x31: "local", // as 1, but is the ascii '1' as RFC1991 incorrectly specified.
+        0x62: "binary", // 'b'
+        0x74: "text", // 't' -- deprecated text format with no encoding specified
+        0x75: "utf8", // 'u'
+    };
+
+    static NOTATION_DATA_FLAGS = {
+        0x80000000: "human-readable",
+    };
+
+    static REVOCATION_REASONS = {
+        0: "No reason specified",
+        1: "Key is superseded",
+        2: "Key material has been compromised ",
+        3: "Key is retired and no longer used",
+        32: "User ID information is no longer valid",
+        100: "Private Use",
+        101: "Private Use",
+        102: "Private Use",
+        103: "Private Use",
+        104: "Private Use",
+        105: "Private Use",
+        106: "Private Use",
+        107: "Private Use",
+        108: "Private Use",
+        109: "Private Use",
+        110: "Private Use",
+    };
+
+    dump() {
+        return this.#Hex.encodePretty(
+            this.stream.bytes.slice(this.start, this.end),
+        );
+    }
+
+    getByteAnnotations() {
+        return Array.from(
+            this.stream.bytes.slice(this.start, this.end),
+            (byte, offset) => {
+                const index = this.start + offset;
+
+                return {
+                    index,
+                    hex: byte.toString(16).padStart(2, "0"),
+                    color: this.byteColors[index],
+                };
+            },
+        );
+    }
+
+    getFieldAnnotations() {
+        const fields = [];
+
+        for (const key of Object.keys(this)) {
+            const value = this[key];
+
+            if (value?.subpackets) {
+                for (const subpacket of value) {
+                    for (const subkey of Object.keys(subpacket)) {
+                        const annotationKey = `${subpacket.id}:${subkey}`;
+                        const color = this.nameColors[annotationKey];
+
+                        if (color) {
+                            fields.push({
+                                group: value.name ?? "subpackets",
+                                name: subkey,
+                                value: subpacket[subkey],
+                                color,
+                                span: this.nameSpans[annotationKey],
+                            });
+                        }
+                    }
+                }
+            } else if (this.nameColors[key]) {
+                fields.push({
+                    name: key,
+                    value,
+                    color: this.nameColors[key],
+                    span: this.nameSpans[key],
+                });
+            }
+        }
+
+        return fields;
+    }
+
+    toJSON() {
+        const output = {};
+
+        for (const key in this) {
+            if (this.nameColors[key]) {
+                output[key] = this[key];
+            }
+        }
+
+        return output;
+    }
+
+    toViewModel() {
+        return {
+            title: String(this.packet),
+            parseErrors: [...(this.parseErrors ?? [])],
+            bytes: this.getByteAnnotations(),
+            fields: this.getFieldAnnotations(),
+            data: this.toJSON(),
+        };
+    }
+
+    nextColor() {
+        const colors = [
+            "#f39c12",
+            "#16a085",
+            "#d35400",
+            "#8e44ad",
+            "#27ae60",
+            "#2c3e50",
+            "#7f8c8d",
+            "#c0392b",
+        ];
+
+        this.colorIndex = ((this.colorIndex || 0) + 1) % colors.length;
+        return colors[this.colorIndex];
+    }
+    nextSubpacket() {
+        this.subpacketId = (this.subpacketId || 0) + 1;
+        return { id: this.subpacketId };
+    }
+    set(name, value) {
+        if (!this.byteColors) {
+            this.byteColors = [];
+            this.nameColors = {};
+            this.nameSpans = {};
+        }
+
+        this.nameColors[name] = this.nextColor();
+        this.nameSpans[name] = [
+            this.lastColorEnd ||
+                (this.stream.pos > 0 ? this.stream.pos - 1 : 0),
+            this.stream.pos,
+        ];
+
+        for (
+            let i = this.lastColorEnd || this.stream.start;
+            i < this.stream.pos;
+            i++
+        ) {
+            this.byteColors[i] = this.nameColors[name];
+        }
+        this.lastColorEnd = this.stream.pos;
+
+        this[name] = value;
+    }
+    setSubpacket(subpacket, name, value) {
+        this.nameColors[subpacket.id + ":" + name] = this.nextColor();
+        this.nameSpans[subpacket.id + ":" + name] = [
+            this.lastColorEnd || 0,
+            this.stream.pos,
+        ];
+
+        for (
+            let i = this.lastColorEnd || this.stream.start;
+            i < this.stream.pos;
+            i++
+        ) {
+            this.byteColors[i] = this.nameColors[subpacket.id + ":" + name];
+        }
+        this.lastColorEnd = this.stream.pos;
+
+        subpacket[name] = value;
+    }
+    parse() {
+        this.start = this.stream.pos;
+        this.set("cipherTypeByte", this.stream.octet());
+
+        if (!(this.cipherTypeByte & 0x80)) {
+            throw new RangeError("Invalid OpenPGP packet header");
+        }
+
+        if (this.cipherTypeByte & 0x40) {
+            this.parseNewHeader();
+        } else {
+            this.parseOldHeader();
+        }
+
+        if (
+            this.stream.subParse(this.length, () => {
+                this.packet = new this.#LookupResult(
+                    Packet.TAGS[this.tag],
+                    this.tag,
+                );
+                this.parseBody();
+            })
+        ) {
+            this.parseError("unparsed data!");
+        }
+        this.end = this.stream.pos;
+
+        return this;
+    }
+
+    // This cipher type byte: 10xxxxyy
+    // x: type
+    // y: size of the length field
+    parseOldHeader() {
+        const size = this.cipherTypeByte & 0x3;
+        this.tag = (this.cipherTypeByte & 0x3c) >> 2;
+
+        switch (size) {
+            case 3: // 0-byte length
+                this.set("length", 0);
+                break;
+
+            case 2: // 4-byte length
+                this.set("length", this.stream.uint32());
+
+                break;
+            case 1: // 2-byte length
+                this.set("length", this.stream.uint16());
+
+                break;
+            case 0: // 1-byte length
+                this.set("length", this.stream.octet());
+        }
+    }
+
+    // This cipher type byte: 11xxxxxx
+    // x: type
+    parseNewHeader() {
+        this.tag = this.cipherTypeByte & 0x3f;
+
+        this.set("length", this.stream.variableLengthLength("support partial"));
+    }
+
+    parseBody() {
+        switch (this.tag) {
+            case 1: // "Public Key Encrypted Session Key Packet",
+                this.parsePublicKeyEncryptedSessionKey();
+                break;
+            case 2: // "Signature Packet",
+                this.parseSignaturePacket();
+                break;
+
+            case 3: // "Symmetric-Key Encrypted Session Key Packet",
+                this.parseSymmetricKeyEncryptedSessionKeyPacket();
+                break;
+
+            case 4: // "One-Pass Signature Packet",
+                this.parseOnePassSignaturePacket();
+                break;
+
+            case 6: // "Public Key Packet",
+            case 14: // "Public Subkey Packet",
+                this.parsePublicKeyPacket();
+                break;
+
+            case 5: // "Secret Key Packet",
+            case 7: // "Secret Subkey Packet",
+                this.parseSecretKeyPacket();
+                break;
+
+            case 11: // "Literal Data Packet",
+                this.parseLiteralDataPacket();
+                break;
+
+            case 13: // User ID Packet",
+                this.parseUserIdPacket();
+                break;
+
+            case 18: // "Sym. Encrypted and Integrity Protected Data Packet",
+                this.parseSymEncryptedIntegrityProtectedDataPacket();
+                break;
+
+            case 21: // "Padding Packet",
+                this.set("padding", this.stream.hex(this.stream.remaining()));
+                break;
+        }
+    }
+
+    parsePublicKeyEncryptedSessionKey() {
+        this.set("version", this.stream.octet());
+
+        if (this.version === 6) {
+            this.set("recipientFieldLength", this.stream.octet());
+
+            if (this.recipientFieldLength > 0) {
+                this.set("recipientKeyVersion", this.stream.octet());
+                this.set(
+                    "recipientKeyFingerprint",
+                    this.stream.hex(this.recipientFieldLength - 1),
+                );
+            } else {
+                this.set("recipientAnonymous", true);
+            }
+
+            this.set(
+                "publicKeyAlgorithm",
+                this.stream.lookup(Packet.PUBLIC_KEY_ALGORITHMS),
+            );
+            this.set(
+                "encryptedSessionKey",
+                this.stream.hex(this.stream.remaining()),
+            );
+        } else if (this.version === 3) {
+            this.set("keyId", this.stream.hex(8).toUpperCase());
+            this.set(
+                "publicKeyAlgorithm",
+                this.stream.lookup(Packet.PUBLIC_KEY_ALGORITHMS),
+            );
+
+            if (this.publicKeyAlgorithm.id === 1) {
+                this.set(
+                    "encryptedSessionKey",
+                    this.stream.multiPrecisionInteger(),
+                );
+            } else {
+                this.parseError(
+                    "Unknown publicKeyAlgorithm",
+                    this.publicKeyAlgorithm,
+                );
+            }
+        } else {
+            this.parseError("Unknown version", this.version);
+        }
+    }
+
+    parseSymmetricKeyEncryptedSessionKeyPacket() {
+        this.set("version", this.stream.octet());
+
+        if (this.version === 6) {
+            this.set("cipherFieldLength", this.stream.octet());
+            this.set(
+                "symmetricAlgorithm",
+                this.stream.lookup(Packet.SYMMETRIC_KEY_ALGORITHMS),
+            );
+            this.set(
+                "aeadAlgorithm",
+                this.stream.lookup(Packet.AEAD_ALGORITHMS),
+            );
+            this.set("stringToKeySpecifierLength", this.stream.octet());
+            this.parseStringToKeySpecifier();
+            this.parseVersion6AeadIV(this.aeadAlgorithm.id);
+
+            const authTagLength =
+                Packet.AEAD_AUTHENTICATION_TAG_LENGTHS[this.aeadAlgorithm.id] ||
+                0;
+            const keyLength = this.stream.remaining() - authTagLength;
+
+            if (authTagLength < 1) {
+                this.parseError(
+                    "Invalid authentication tag length",
+                    authTagLength,
+                );
+            }
+
+            this.set("encryptedSessionKey", this.stream.hex(keyLength));
+            this.set("aeadAuthenticationTag", this.stream.hex(authTagLength));
+        } else if (this.version === 4) {
+            this.set(
+                "symmetricAlgorithm",
+                this.stream.lookup(Packet.SYMMETRIC_KEY_ALGORITHMS),
+            );
+
+            this.parseStringToKeySpecifier();
+
+            if (this.stream.remaining() > 0) {
+                this.set(
+                    "encryptedSessionKey",
+                    this.stream.hex(this.stream.remaining()),
+                );
+            }
+        } else {
+            this.parseError("Unknown version", this.version);
+        }
+    }
+
+    parseUserIdPacket() {
+        this.set("userId", this.stream.utf8(this.length));
+    }
+
+    parseSignaturePacket() {
+        this.set("version", this.stream.octet());
+        if (this.version === 6 || this.version === 4) {
+            this.set(
+                "signatureType",
+                this.stream.lookup(Packet.SIGNATURE_TYPES),
+            );
+            this.set(
+                "publicKeyAlgorithm",
+                this.stream.lookup(Packet.PUBLIC_KEY_ALGORITHMS),
+            );
+            this.set(
+                "hashAlgorithm",
+                this.stream.lookup(Packet.HASH_ALGORITHMS),
+            );
+
+            if (this.version === 6) {
+                this.set("hashedDataCount", this.stream.uint32());
+            } else {
+                this.set("hashedDataCount", this.stream.uint16());
+            }
+
+            if (
+                this.stream.subParse(this.hashedDataCount, () => {
+                    this.hashedSubPackets = this.parseSignatureSubpackets();
+                })
+            ) {
+                this.parseError("Unparsed hashed sub packet data");
+            }
+
+            if (this.version === 6) {
+                this.set("unhashedDataCount", this.stream.uint32());
+            } else {
+                this.set("unhashedDataCount", this.stream.uint16());
+            }
+
+            if (
+                this.stream.subParse(this.unhashedDataCount, () => {
+                    this.unhashedSubPackets = this.parseSignatureSubpackets();
+                })
+            ) {
+                this.parseError("Unparsed unhashed sub packet data");
+            }
+
+            this.set("signedHashValuePrefix", this.stream.hex(2));
+
+            if (this.version === 6) {
+                this.parseVersion6Salt(this.hashAlgorithm.id);
+            }
+
+            if (this.publicKeyAlgorithm.id === 0x16) {
+                this.set("signatureR", this.stream.multiPrecisionInteger());
+                this.set("signatureS", this.stream.multiPrecisionInteger());
+            } else {
+                this.set("signature", this.stream.multiPrecisionInteger());
+            }
+        } else if (this.version === 3) {
+            this.set("hashLength", this.stream.octet());
+            if (this.hashLength !== 5) {
+                this.parseError("Incorrect hash length", this.hashLength);
+            } else {
+                this.set(
+                    "signatureType",
+                    this.stream.lookup(Packet.SIGNATURE_TYPES),
+                );
+                this.set("creationTime", this.stream.time());
+                this.set("keyId", this.stream.hex(8).toUpperCase());
+                this.set(
+                    "publicKeyAlgorithm",
+                    this.stream.lookup(Packet.PUBLIC_KEY_ALGORITHMS),
+                );
+                this.set(
+                    "hashAlgorithm",
+                    this.stream.lookup(Packet.HASH_ALGORITHMS),
+                );
+                this.set("signedHashValuePrefix", this.stream.hex(2));
+                this.set("signature", this.stream.multiPrecisionInteger());
+            }
+        } else {
+            this.parseError("Unsupported version", this.version);
+        }
+    }
+
+    parseSignatureSubpackets(subpackets) {
+        subpackets = subpackets || [];
+        subpackets.subpackets = true;
+        if (this.stream.pos >= this.stream.end) {
+            return subpackets;
+        } else {
+            const subpacket = this.nextSubpacket();
+            this.setSubpacket(
+                subpacket,
+                "length",
+                this.stream.variableLengthLength(),
+            );
+
+            this.setSubpacket(
+                subpacket,
+                "subpacketType",
+                this.stream.lookupCritical(Packet.SIGNATURE_SUBPACKET_TYPES),
+            );
+            switch (subpacket.subpacketType.id) {
+                case 2: // "Signature Creation Time",
+                    this.setSubpacket(
+                        subpacket,
+                        "creationTime",
+                        this.stream.time(),
+                    );
+                    break;
+
+                case 9: // "Key Expiration Time",
+                    this.setSubpacket(
+                        subpacket,
+                        "keyExpirationTime",
+                        this.stream.time(),
+                    );
+                    break;
+
+                case 11: // "Preferred Symmetric Ciphers for v1 SEIPD",
+                    this.setSubpacket(
+                        subpacket,
+                        "preferredSymmetricAlgorithms",
+                        this.stream.lookupArray(
+                            Packet.SYMMETRIC_KEY_ALGORITHMS,
+                            subpacket.length - 1,
+                        ),
+                    );
+                    break;
+
+                case 16: // "Issuer",
+                    this.setSubpacket(subpacket, "keyId", this.stream.hex(8));
+                    break;
+
+                case 20: // "Notation Data",
+                    this.parseNotationDataSubpacket(subpacket);
+                    break;
+
+                case 21: // "Preferred Hash Algorithms",
+                    this.setSubpacket(
+                        subpacket,
+                        "preferredHashAlgorithms",
+                        this.stream.lookupArray(
+                            Packet.HASH_ALGORITHMS,
+                            subpacket.length - 1,
+                        ),
+                    );
+                    break;
+
+                case 22: // "Preferred Compression Algorithms",
+                    this.setSubpacket(
+                        subpacket,
+                        "preferredCompressionAlgorithms",
+                        this.stream.lookupArray(
+                            Packet.COMPRESSION_ALGORITHMS,
+                            subpacket.length - 1,
+                        ),
+                    );
+                    break;
+
+                case 23: // "Key Server Preferences",
+                    this.setSubpacket(
+                        subpacket,
+                        "keyServerPreferences",
+                        this.stream.lookupFlags(
+                            Packet.KEYSERVER_PREFERENCES,
+                            subpacket.length - 1,
+                        ),
+                    );
+                    break;
+
+                case 25: // "Primary User ID",
+                    this.setSubpacket(
+                        subpacket,
+                        "isPrimaryID",
+                        subpacket.length > 1 && this.stream.octet()
+                            ? true
+                            : false,
+                    );
+                    break;
+
+                case 27: // "Key Flags",
+                    this.setSubpacket(
+                        subpacket,
+                        "keyFlags",
+                        this.stream.lookupFlags(
+                            Packet.KEY_FLAGS,
+                            subpacket.length - 1,
+                        ),
+                    );
+                    break;
+
+                case 29: // "Reason for Revocation",
+                    this.setSubpacket(
+                        subpacket,
+                        "revocationReasonCode",
+                        this.stream.lookup(Packet.REVOCATION_REASONS),
+                    );
+                    if (subpacket.length > 2) {
+                        this.setSubpacket(
+                            subpacket,
+                            "revocationReason",
+                            this.stream.utf8(subpacket.length - 2),
+                        );
+                    }
+                    break;
+
+                case 30: // "Features",
+                    this.setSubpacket(
+                        subpacket,
+                        "keyFeatures",
+                        this.stream.lookupFlags(
+                            Packet.KEY_FEATURES,
+                            subpacket.length - 1,
+                        ),
+                    );
+                    break;
+
+                case 32: // "Embedded Signature",
+                    if (
+                        this.stream.subParse(subpacket.length - 1, () => {
+                            this.setSubpacket(
+                                subpacket,
+                                "subsignature",
+                                new Packet(this.stream, {
+                                    Hex: this.#Hex,
+                                    LookupResult: this.#LookupResult,
+                                }),
+                            );
+                            subpacket.subsignature.parseSignaturePacket();
+                            delete subpacket.subsignature.stream;
+                        })
+                    ) {
+                        this.parseError("Unhanded sub-signature data");
+                    }
+                    break;
+
+                case 33: // "Issuer Fingerprint",
+                    this.setSubpacket(
+                        subpacket,
+                        "issuerFingerprintVersion",
+                        this.stream.hex(1),
+                    );
+                    this.setSubpacket(
+                        subpacket,
+                        "issuerFingerprint",
+                        this.stream.hex(subpacket.length - 2),
+                    );
+                    break;
+
+                case 34: // "Reserved (Formerly Preferred AEAD Algorithms)",
+                    this.setSubpacket(
+                        subpacket,
+                        "legacyPreferredAeadAlgorithms",
+                        this.stream.lookup(Packet.AEAD_ALGORITHMS),
+                    );
+                    break;
+
+                case 39: // "Preferred AEAD Ciphersuites",
+                    if ((subpacket.length - 1) % 2 !== 0) {
+                        this.setSubpacket(
+                            subpacket,
+                            "data",
+                            this.stream.hex(subpacket.length - 1),
+                        );
+                        this.parseError(
+                            "Invalid Preferred AEAD Ciphersuites length",
+                            subpacket.length - 1,
+                        );
+                    } else {
+                        const count = (subpacket.length - 1) / 2;
+                        for (let index = 0; index < count; index += 1) {
+                            this.setSubpacket(
+                                subpacket,
+                                `cipher${index}`,
+                                this.stream.lookup(
+                                    Packet.SYMMETRIC_KEY_ALGORITHMS,
+                                ),
+                            );
+                            this.setSubpacket(
+                                subpacket,
+                                `mode${index}`,
+                                this.stream.lookup(Packet.AEAD_ALGORITHMS),
+                            );
+                        }
+                    }
+                    break;
+
+                default:
+                    this.setSubpacket(
+                        subpacket,
+                        "data",
+                        this.stream.hex(subpacket.length - 1),
+                    );
+                    this.parseError(
+                        "Unknown subpacketType",
+                        subpacket.subpacketType,
+                    );
+            }
+            subpackets.push(subpacket);
+        }
+        return this.parseSignatureSubpackets(subpackets);
+    }
+
+    parseNotationDataSubpacket(subpacket) {
+        this.setSubpacket(
+            subpacket,
+            "flags",
+            this.stream.lookupFlags(Packet.NOTATION_DATA_FLAGS, 4),
+        );
+
+        const isHumanReadable = subpacket.flags.some(
+            (flag) => flag.id === 0x80000000,
+        );
+
+        this.setSubpacket(
+            subpacket,
+            "notationDataNameLength",
+            this.stream.uint16(),
+        );
+        this.setSubpacket(
+            subpacket,
+            "notationDataValueLength",
+            this.stream.uint16(),
+        );
+
+        if (isHumanReadable) {
+            this.setSubpacket(
+                subpacket,
+                "notationName",
+                this.stream.utf8(subpacket.notationDataNameLength),
+            );
+            this.setSubpacket(
+                subpacket,
+                "notationValue",
+                this.stream.utf8(subpacket.notationDataValueLength),
+            );
+        } else {
+            this.setSubpacket(
+                subpacket,
+                "notationName",
+                this.stream.hex(subpacket.notationDataNameLength),
+            );
+            this.setSubpacket(
+                subpacket,
+                "notationValue",
+                this.stream.hex(subpacket.notationDataValueLength),
+            );
+        }
+    }
+
+    parseSymEncryptedIntegrityProtectedDataPacket() {
+        this.set("version", this.stream.octet());
+        this.set("encryptedData", this.stream.hex(this.length));
+    }
+
+    parsePublicKeyPacket() {
+        this.set("version", this.stream.octet());
+
+        if (this.version === 6 || this.version === 4 || this.version === 3) {
+            this.set("createdAt", this.stream.time());
+            if (this.version === 3) {
+                this.set("validDays", this.stream.uint16());
+            }
+
+            this.set(
+                "algorithm",
+                this.stream.lookup(Packet.PUBLIC_KEY_ALGORITHMS),
+            );
+
+            if (this.version === 6) {
+                this.set("publicKeyOctetCount", this.stream.uint32());
+            }
+
+            this.parsePublicKey(this.algorithm.id);
+        } else {
+            this.parseError("Unsupported version", this.version);
+        }
+    }
+
+    parsePublicKey(algo) {
+        switch (algo) {
+            case 1: // RSA S&E
+            case 2: // RSA Encrypt Only
+            case 3: // RSA Sign Only
+                this.set("rsaModulus_n", this.stream.multiPrecisionInteger());
+                this.set("rsaExponent_e", this.stream.multiPrecisionInteger());
+                break;
+
+            case 16: // ElGamal
+                this.set("elGamalPrime_p", this.stream.multiPrecisionInteger());
+                this.set(
+                    "elGamalGroupGenerator_g",
+                    this.stream.multiPrecisionInteger(),
+                );
+                this.set(
+                    "elGamalPublicKeyValue_y",
+                    this.stream.multiPrecisionInteger(),
+                );
+                break;
+
+            case 17: // DSA
+                this.set("dsaPrime_p", this.stream.multiPrecisionInteger());
+                this.set(
+                    "dsaGroupOrder_q",
+                    this.stream.multiPrecisionInteger(),
+                );
+                this.set(
+                    "dsaGroupGenerator_g",
+                    this.stream.multiPrecisionInteger(),
+                );
+                this.set(
+                    "dsaPublicKeyValue_y",
+                    this.stream.multiPrecisionInteger(),
+                );
+                break;
+
+            case 18: // ECDH
+                this.set("ecdhCurveOidLength", this.stream.octet());
+                this.set(
+                    "ecdhCurveOid",
+                    this.stream.hex(this.ecdhCurveOidLength),
+                );
+                this.set("ecdhPublicKey", this.stream.multiPrecisionInteger());
+                this.set("ecdhKdfLength", this.stream.octet());
+                this.set("ecdhKdfReserved", this.stream.octet());
+                this.set("ecdhKdfFunctionID", this.stream.octet());
+                this.set("ecdhSymmetricalAlgorithmID", this.stream.octet());
+                break;
+
+            case 19: // ECDSA
+                this.set("ecdsaCurveOidLength", this.stream.octet());
+                this.set(
+                    "ecdsaCurveOid",
+                    this.stream.hex(this.ecdsaCurveOidLength),
+                );
+                this.set("ecdsaEcPoint", this.stream.multiPrecisionInteger());
+                break;
+
+            case 22: // EdDSALegacy
+                this.set("ecdsaLegacyCurveOidLength", this.stream.octet());
+                this.set(
+                    "ecdsaLegacyCurveOid",
+                    this.stream.hex(this.ecdsaLegacyCurveOidLength),
+                );
+                this.set(
+                    "ecdsaLegacyEcPoint",
+                    this.stream.multiPrecisionInteger(),
+                );
+                break;
+
+            case 25: // X25519
+                this.set("x25519PublicKey", this.stream.hex(32));
+                break;
+
+            case 26: // X448
+                this.set("x448PublicKey", this.stream.hex(56));
+                break;
+
+            case 27: // Ed25519
+                this.set("ed25519PublicKey", this.stream.hex(32));
+                break;
+
+            case 28: // Ed448
+                this.set("ed448PublicKey", this.stream.hex(57));
+                break;
+
+            default:
+                this.parseError("Unsupported algorithm: " + algo, algo);
+                break;
+        }
+    }
+
+    parseSecretKeyPacket() {
+        this.parsePublicKeyPacket();
+
+        const canParse =
+            this.version === 6 || this.version === 4 || this.version === 3;
+
+        if (!canParse) {
+            this.parseError("Unsupported private key version", this.version);
+        }
+
+        const subpacket = this.namedSubpacket("stringToKey");
+
+        this.setSubpacket(
+            subpacket,
+            "specifierType",
+            this.stream.lookup(Packet.STRING_TO_KEY_USAGES),
+        );
+        const s2kUsage = subpacket.specifierType.id;
+
+        const isCleartext = s2kUsage === 0;
+        const isStringToKey =
+            s2kUsage === 253 || s2kUsage === 254 || s2kUsage === 255;
+
+        if (isCleartext) {
+            this.parseSecretKeyCleartext();
+            return;
+        }
+
+        if (this.version === 6) {
+            if (s2kUsage === 255) {
+                this.parseError("Invalid S2K for a V6 key", s2kUsage);
+                return;
+            }
+
+            if (s2kUsage !== 0) {
+                this.setSubpacket(subpacket, "length", this.stream.octet());
+            }
+        }
+
+        if (isStringToKey) {
+            this.setSubpacket(
+                subpacket,
+                "encryption",
+                this.stream.lookup(Packet.SYMMETRIC_KEY_ALGORITHMS),
+            );
+        }
+
+        if (s2kUsage === 253) {
+            this.setSubpacket(
+                subpacket,
+                "aeadAlgorithm",
+                this.stream.lookup(Packet.AEAD_ALGORITHMS),
+            );
+        }
+
+        if (this.version === 6 && (s2kUsage === 253 || s2kUsage === 254)) {
+            this.setSubpacket(subpacket, "fieldLength", this.stream.octet());
+        }
+
+        this.parseStringToKeySpecifier();
+
+        if (s2kUsage === 253) {
+            this.parseVersion6AeadIV(subpacket.aeadAlgorithm.id);
+        } else {
+            const ivLength =
+                Packet.SECRET_KEY_ALGORITHM_BLOCK_SIZES[
+                    subpacket.encryption.id
+                ] ?? 0;
+
+            if (ivLength > 0) {
+                this.setSubpacket(subpacket, "iv", this.stream.hex(ivLength));
+            } else {
+                this.parseError("Unable to determine IV length by block size");
+                this.set(
+                    "privateKeyMaterial",
+                    this.stream.hex(this.stream.remaining()),
+                );
+            }
+        }
+
+        this.parseSecretKeyAndChecksumEncrypted(
+            this.algorithm.id,
+            s2kUsage,
+            subpacket.encryption.id,
+            subpacket.specifierType.id,
+        );
+    }
+
+    parseSecretKeyCleartext() {
+        this.parseSecretKey(this.algorithm.id);
+
+        if (this.version === 4 || this.version === 3) {
+            this.set("checksum", this.stream.hex(this.stream.remaining()));
+        }
+    }
+
+    parseSecretKeyAndChecksumEncrypted(
+        keyAlgorithm,
+        s2kUsage,
+        s2kEncryption,
+        s2kSpecifier,
+    ) {
+        // we aren't doing the crypto operations to get the secret key in cleartext,
+        // so we will just report them as-is with '_encrypted' as part of their component names.
+
+        if (s2kUsage === 0) {
+            this.parseError("Invalid string to key usage", s2kUsage);
+            return;
+        }
+
+        this.parseSecretKey(keyAlgorithm, "_encrypted");
+
+        const subpacket = this.namedSubpacket("stringToKey");
+
+        switch (s2kUsage) {
+            case 253: // S2K: AEAD
+                const checksumLength =
+                    Packet.AEAD_AUTHENTICATION_TAG_LENGTHS[
+                        subpacket.aeadAlgorithm.id
+                    ] || 0;
+                this.setSubpacket(
+                    subpacket,
+                    "aeadAuthenticationTag",
+                    this.stream.hex(checksumLength),
+                );
+                break;
+
+            case 254: // S2K: CFB
+                this.setSubpacket(subpacket, "cfbHash", this.stream.hex(20));
+                break;
+
+            case 255: // S2K: MalleableCFB
+                this.setSubpacket(
+                    subpacket,
+                    "malleableCfbChecksum",
+                    this.stream.hex(2),
+                );
+                break;
+
+            default: // Any other symmetric key encryption algorithm
+                this.setSubpacket(subpacket, "checksum", this.stream.hex(2));
+                break;
+        }
+    }
+
+    parseSecretKey(keyAlgorithm, suffix = "") {
+        switch (keyAlgorithm) {
+            case 1: // RSA S&E
+            case 2: // RSA Encrypt Only
+            case 3: // RSA Sign Only
+                this.set("rsaD" + suffix, this.stream.multiPrecisionInteger());
+                this.set("rsaP" + suffix, this.stream.multiPrecisionInteger());
+                this.set("rsaQ" + suffix, this.stream.multiPrecisionInteger());
+                this.set("rsaU" + suffix, this.stream.multiPrecisionInteger());
+                break;
+
+            case 16: // ElGamal
+                this.set(
+                    "elGamalX" + suffix,
+                    this.stream.multiPrecisionInteger(),
+                );
+                break;
+
+            case 17: // DSA
+                this.set("dsaX" + suffix, this.stream.multiPrecisionInteger());
+                break;
+
+            case 18: // ECDH
+                this.set(
+                    "ecdhSecretKey" + suffix,
+                    this.stream.multiPrecisionInteger(),
+                );
+                break;
+
+            case 19: // ECDSA
+                this.set(
+                    "ecdsaSecretKey" + suffix,
+                    this.stream.multiPrecisionInteger(),
+                );
+                break;
+
+            case 22: // EdDSALegacy
+                this.set(
+                    "edDsaLegacysecretKey" + suffix,
+                    this.stream.multiPrecisionInteger(),
+                );
+                break;
+
+            case 25: // X25519
+                this.set("x25519SecretKey" + suffix, this.stream.hex(32));
+                break;
+
+            case 26: // X448
+                this.set("x448SecretKey" + suffix, this.stream.hex(56));
+                break;
+
+            case 27: // Ed25519
+                this.set("ed25519SecretKey" + suffix, this.stream.hex(32));
+                break;
+
+            case 28: // Ed448
+                this.set("ed448SecretKey" + suffix, this.stream.hex(57));
+                break;
+
+            case 253: // S2K: AEAD
+            case 254: // S2K: CFB
+            case 255: // S2K: MalleableCFB
+                this.parseError(
+                    "Got string to key usage value when key algorithm was expected",
+                    keyAlgorithm,
+                );
+                break;
+
+            default:
+                this.parseError("Unknown algorithm", keyAlgorithm);
+                break;
+        }
+    }
+
+    parseOnePassSignaturePacket() {
+        this.set("version", this.stream.octet());
+
+        if (this.version !== 6 && this.version !== 3) {
+            this.parseError(
+                "Unsupported one-pass signature packet version",
+                this.version,
+            );
+            return;
+        }
+
+        this.set("signatureTypeID", this.stream.octet());
+        this.set("hashAlgorithm", this.stream.lookup(Packet.HASH_ALGORITHMS));
+        this.set(
+            "publicKeyAlgorithm",
+            this.stream.lookup(Packet.PUBLIC_KEY_ALGORITHMS),
+        );
+
+        if (this.version === 6) {
+            this.parseVersion6Salt(this.hashAlgorithm.id);
+        }
+
+        if (this.version === 3) {
+            this.set("signingKeyID", this.stream.octet());
+        } else {
+            this.set("signingKeyID", this.stream.hex(32));
+        }
+
+        this.set("isNested", this.stream.octet() === 0);
+    }
+
+    parseLiteralDataPacket() {
+        this.set("format", this.stream.lookup(Packet.LITERAL_DATA_FORMATS));
+        this.set("filenameLength", this.stream.octet());
+
+        if (this.filenameLength > 0) {
+            this.set("filename", this.stream.hex(this.filenameLength));
+        }
+
+        this.set("date", this.stream.time());
+
+        const remaining = this.stream.remaining();
+        const formatIsText = this.format.id === 116 || this.format.id === 117;
+
+        const data = formatIsText
+            ? this.stream.utf8(remaining)
+            : this.stream.hex(remaining);
+
+        this.set("data", data);
+    }
+
+    parseStringToKeySpecifier() {
+        const subpacket = this.namedSubpacket("stringToKey");
+
+        this.setSubpacket(
+            subpacket,
+            "specifierType",
+            this.stream.lookup(Packet.STRING_TO_KEY_SPECIFIERS),
+        );
+        const s2kSpecifierLength =
+            Packet.STRING_TO_KEY_SPECIFIER_FIELD_SIZES[
+                subpacket.specifierType.id
+            ] || 0;
+
+        if (s2kSpecifierLength === 0) {
+            this.parseError(
+                "Unexpected string to key specifier or length",
+                subpacket.specifierType,
+            );
+            return;
+        }
+
+        let remainingLength = s2kSpecifierLength;
+
+        switch (subpacket.specifierType.id) {
+            case 0: // Simple S2K
+                this.setSubpacket(
+                    subpacket,
+                    "hashAlgorithm",
+                    this.stream.lookup(Packet.HASH_ALGORITHMS),
+                );
+                break;
+
+            case 1: // Salted S2K
+                this.setSubpacket(
+                    subpacket,
+                    "hashAlgorithm",
+                    this.stream.lookup(Packet.HASH_ALGORITHMS),
+                );
+                this.setSubpacket(subpacket, "salt", this.stream.hex(8));
+                break;
+
+            case 3: // Iterated and Salted S2K
+                this.setSubpacket(
+                    subpacket,
+                    "hashAlgorithm",
+                    this.stream.lookup(Packet.HASH_ALGORITHMS),
+                );
+                this.setSubpacket(subpacket, "salt", this.stream.hex(8));
+                this.setSubpacket(subpacket, "codedCount", this.stream.octet());
+                break;
+
+            case 4: // Argon2
+                this.setSubpacket(subpacket, "argonSalt", this.stream.hex(16));
+                this.setSubpacket(
+                    subpacket,
+                    "argonPassesT",
+                    this.stream.octet(),
+                );
+                this.setSubpacket(
+                    subpacket,
+                    "argonParallelismP",
+                    this.stream.octet(),
+                );
+                this.setSubpacket(
+                    subpacket,
+                    "argonEncodedMemoryM",
+                    this.stream.octet(),
+                );
+                break;
+
+            default:
+                this.parseError(
+                    "Unsupported string to key specifier type",
+                    subpacket.specifierType,
+                );
+                break;
+        }
+    }
+
+    parseVersion6AeadIV(aeadAlgorithm) {
+        const subpacket = this.namedSubpacket("stringToKey");
+        const nonceLength = Packet.AEAD_IV_LENGTHS[aeadAlgorithm];
+        this.setSubpacket(subpacket, "aeadNonce", this.stream.hex(nonceLength));
+    }
+
+    parseVersion6Salt(hashAlgorithmID) {
+        const saltSize = this.stream.octet();
+        const expectedSaltSize = Packet.HASH_SALT_SIZES[hashAlgorithmID] || 0;
+
+        const isMatchingSaltSize = saltSize === expectedSaltSize;
+        const isExperimentalOrPrivateUseHashAlgo =
+            this.getIsExperimentalOrPrivateUseIdentifier(hashAlgorithmID);
+
+        if (isMatchingSaltSize || isExperimentalOrPrivateUseHashAlgo) {
+            this.set("saltSize", saltSize);
+            this.set("salt", this.stream.hex(this.saltSize));
+        } else if (saltSize > 0 && expectedSaltSize === 0) {
+            this.parseError(
+                "Non-zero salt size when zero was expected",
+                saltSize,
+            );
+        }
+    }
+
+    getIsExperimentalOrPrivateUseIdentifier(id) {
+        return id >= 100 && id <= 110;
+    }
+
+    getStringToKeySpecifierTypeFromLength(length) {
+        for (const key in Packet.STRING_TO_KEY_SPECIFIER_FIELD_SIZES) {
+            if (Packet.STRING_TO_KEY_SPECIFIER_FIELD_SIZES[key] === length) {
+                return new this.#LookupResult(
+                    Packet.STRING_TO_KEY_SPECIFIERS[key],
+                    key,
+                );
+            }
+        }
+
+        return null;
+    }
+
+    namedSubpacket(name) {
+        if (this[name] !== undefined && this[name].subpackets) {
+            return this[name][0];
+        }
+
+        const subpackets = [];
+        subpackets.subpackets = true;
+        subpackets.name = name;
+
+        const subpacket = this.nextSubpacket();
+        subpackets.push(subpacket);
+
+        this.set(name, subpackets);
+
+        return subpacket;
+    }
+
+    parseError(message, context) {
+        if (arguments.length > 1) {
+            message = `${message}: ${context}`;
+        }
+
+        this.parseErrors = this.parseErrors || [];
+        this.parseErrors.push(message);
+    }
+}
+
+export class PgpPacketDecoder {
+    #Base64;
+    #Stream;
+    #Hex;
+    #LookupResult;
+
+    constructor({
+        Base64: Base64Codec = Base64,
+        Stream: StreamClass = Stream,
+        Hex,
+        LookupResult: LookupResultClass = LookupResult,
+    } = {}) {
+        if (typeof Base64Codec?.unarmor !== "function") {
+            throw new TypeError("PgpPacketDecoder requires Base64.unarmor()");
+        }
+        if (typeof StreamClass !== "function") {
+            throw new TypeError("PgpPacketDecoder requires a Stream class");
+        }
+        if (typeof Hex?.encodePretty !== "function") {
+            throw new TypeError("PgpPacketDecoder requires Hex.encodePretty()");
+        }
+        if (typeof LookupResultClass !== "function") {
+            throw new TypeError(
+                "PgpPacketDecoder requires a LookupResult class",
+            );
+        }
+
+        this.#Base64 = Base64Codec;
+        this.#Stream = StreamClass;
+        this.#Hex = Hex;
+        this.#LookupResult = LookupResultClass;
+    }
+
+    static normalize(text) {
+        if (typeof text !== "string") {
+            throw new TypeError("OpenPGP input must be a string");
+        }
+
+        return text
+            .split("\n")
+            .map((line) => line.trimStart())
+            .join("\n");
+    }
+
+    decode(text) {
+        const normalizedText = PgpPacketDecoder.normalize(text);
+        const bytes = this.#Base64.unarmor(normalizedText);
+        const stream = new this.#Stream(bytes);
+        const packets = [];
+
+        while (stream.pos < stream.end) {
+            const previousPosition = stream.pos;
+            const packet = new Packet(stream, {
+                Hex: this.#Hex,
+                LookupResult: this.#LookupResult,
+            }).parse();
+
+            packets.push(packet);
+
+            if (stream.pos <= previousPosition) {
+                throw new RangeError(
+                    `Decoder made no progress at byte ${previousPosition}`,
+                );
+            }
+        }
+
+        return { bytes, packets };
+    }
+}
+
+export function decode(text, dependencies) {
+    return new PgpPacketDecoder(dependencies).decode(text);
+}
