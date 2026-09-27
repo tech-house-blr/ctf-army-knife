@@ -7,7 +7,7 @@ export default function Home() {
 
             <main className="text-center text-2xl mt-10 text-amber-300">
                 <p>Tools:</p>
-                <p>QuipQuip, Cyberchef, AperiSolve, GPG Decoder </p>
+                <p>Cryptogram Solver, CyberChef, AperiSolve, GPG Decoder</p>
             </main>
         </>
     );
