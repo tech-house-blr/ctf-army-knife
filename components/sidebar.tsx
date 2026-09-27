@@ -8,10 +8,10 @@ export default function Sidebar() {
 
     const menuItems = [
         { name: "Dashboard", href: "/" },
-        { name: "QuipQuip", href: "/quipquip" },
-        { name: "Cyberchef", href: "/cyberchef" },
-        { name: "AperiSolve", href: "/aperisolve" },
-        { name: "GPG Decoder", href: "/gpg-decoder" },
+        { name: "Cryptogram Solver", href: "/cryptogramSolver" },
+        { name: "CyberChef", href: "/cyberChef" },
+        { name: "AperiSolve", href: "/aperiSolve" },
+        { name: "GPG Decoder", href: "/gpgDecoder" },
     ];
 
     return (
