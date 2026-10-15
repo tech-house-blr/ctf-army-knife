@@ -24,6 +24,12 @@
     // CyberChef replaces history entries rather than emitting hashchange.
     const replaceState = window.history.replaceState.bind(window.history);
     window.history.replaceState = function (...args) {
+        // Upstream option/worker initialization can publish an empty state
+        // before loadURIParams reads the initial recipe. Retain that fragment
+        // until the application has finished loading it.
+        if (!ready && args.length >= 3) {
+            args[2] = window.location.pathname + window.location.search + lastHash;
+        }
         replaceState(...args);
         reportHash();
     };

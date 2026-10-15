@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const recipeLink = (recipe, input = "") => `/cyberchef#recipe=${recipe}&input=${Buffer.from(input).toString("base64")}`;
+const recipeLink = (recipe, input = "") => `/cyberchef#recipe=${recipe}&input=${encodeURIComponent(Buffer.from(input).toString("base64"))}&ienc=65001&oenc=65001`;
 
 async function openWorkspace(page, url = "/cyberchef") {
     await page.goto(url);
@@ -52,6 +52,10 @@ test("recipe edits update the parent URL without remounting; shared links surviv
     await frame.locator("#search-results li.operation").filter({ hasText: "To Base64" }).first().dblclick();
     await expect.poll(() => decodeURIComponent(page.url())).toContain("To_Base64");
     expect(new URL(child.url()).pathname).toBe(initialPath);
+    // Clear the search to dismiss its operation-help popover before using the
+    // recipe toolbar, just as a user would after choosing an operation.
+    await frame.locator("#search").fill("");
+    await frame.locator("#search").dispatchEvent("search");
     await frame.locator("#save").click();
     const generated = await frame.locator("#save-link").getAttribute("href");
     expect(generated).toContain("/cyberchef#");
@@ -83,6 +87,7 @@ test("settings, file loading, output download, and the sidebar remain reachable"
     await frame.locator("#open-file").setInputFiles({ name: "sample.txt", mimeType: "text/plain", buffer: Buffer.from("abc") });
     await expect(frame.locator("#output .cm-content:visible")).toContainText("61 62 63");
     const download = page.waitForEvent("download");
+    page.once("dialog", (dialog) => dialog.accept("output.txt"));
     await frame.locator("#save-to-file").click();
     expect((await download).suggestedFilename()).toBeTruthy();
     await page.getByRole("button", { name: "Open navigation" }).click();

@@ -61,6 +61,21 @@ source **before compilation**, so changes also reach the downloadable applicatio
 The community theme is the default. Users can still select an upstream theme.
 Change these integration files, not the generated public assets or cache.
 
+The application shell stays compact: a shared tool rail, a short CyberChef
+header, copy-link and standalone-workspace actions, and a small status footer.
+Amber accents and dark panels match the existing tools. The four-pane workspace
+keeps the full upstream operation catalog.
+
+To test against an already-running server, set `PLAYWRIGHT_BASE_URL` to its URL
+before `npm run test:browser`. Otherwise Playwright starts the production server
+on port 4000 itself.
+
+The build also applies `webpack-compat.cjs` to normalize resource paths for
+Windows and POSIX. This keeps dependency JavaScript out of Babel unless upstream
+explicitly includes it, routes bitmap fonts to asset loaders, and limits global
+JavaScript shims to JavaScript files. Installed dependencies survive source-only
+customization changes; an upstream lockfile change still triggers `npm ci`.
+
 Recipe links use `/cyberchef#recipe=…&input=…`; CyberChef's hash syntax is retained.
 The frame uses `/tools/cyberchef/<build-id>/index.html`. A small validated
 same-origin bridge synchronizes fragments without moving the frame away from its
