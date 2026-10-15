@@ -1,0 +1,13 @@
+CTF Army Knife CyberChef integration
+
+Includes CyberChef, originally developed by GCHQ.
+CyberChef: Crown Copyright, licensed under Apache License 2.0.
+https://github.com/gchq/CyberChef
+
+Community modifications: stone/amber theme, CTF Army Knife branding,
+embedded workspace lifecycle and stable recipe-link integration.
+The original operation implementations are preserved.
+
+Upstream LICENSE, NOTICE (when provided), and bundled third-party license
+notices accompany the distribution. These modifications do not imply GCHQ
+endorsement. Consult each bundled dependency's license for its terms.
