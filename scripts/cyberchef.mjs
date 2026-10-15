@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { cp, mkdir, readFile, writeFile, access, rm, rename, lstat, realpath } from "node:fs/promises";
+import { cp, mkdir, readFile, writeFile, access, rm, rename, lstat, realpath, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
@@ -102,8 +102,17 @@ async function prepare(state) {
     await mkdir(cache, { recursive: true });
     const prepared = path.join(cache, "prepared.json");
     if (await exists(prepared) && (await json(prepared)).buildId === state.buildId) return;
-    await removeManaged(cache, "work");
+    // Recreate source and generated config, but retain separately locked npm
+    // dependencies when only integration inputs have changed.
+    if (await exists(work)) {
+        for (const name of await readdir(work)) {
+            if (name !== "node_modules") await removeManaged(work, name);
+        }
+    }
     await cp(source, work, { recursive: true, filter: (file) => !["node_modules", ".git", "build"].includes(path.basename(file)) });
+    await cp(path.join(integration, "webpack-compat.cjs"), path.join(work, "ctf-webpack.cjs"));
+    const webpackFile = path.join(work, "webpack.config.js");
+    await writeFile(webpackFile, await readFile(webpackFile, "utf8") + '\nrequire("./ctf-webpack.cjs")(module.exports);\n');
     // Add CSS and bridge to SOURCE before compilation, including the standalone ZIP.
     const custom = path.join(work, "src/web/static/ctf");
     await mkdir(custom, { recursive: true });

@@ -2,60 +2,61 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import ToolIcon, { type ToolIconName } from "@/components/tool-icon";
 
 export default function Sidebar() {
     const [collapsed, setIsCollapsed] = useState(true);
+    const pathname = usePathname();
 
-    const menuItems = [
-        { name: "Dashboard", href: "/" },
-        { name: "Cryptogram Solver", href: "/cryptogramSolver" },
-        { name: "CyberChef", href: "/cyberchef" },
-        { name: "AperiSolve", href: "/aperisolve" },
-        { name: "GPG Decoder", href: "/gpgDecoder" },
+    const menuItems: { name: string; href: string; icon: ToolIconName; number: string }[] = [
+        { name: "Dashboard", href: "/", icon: "grid", number: "00" },
+        { name: "Cryptogram Solver", href: "/cryptogramSolver", icon: "cipher", number: "01" },
+        { name: "CyberChef", href: "/cyberchef", icon: "lab", number: "02" },
+        { name: "AperiSolve", href: "/aperisolve", icon: "image", number: "03" },
+        { name: "GPG Decoder", href: "/gpgDecoder", icon: "key", number: "04" },
     ];
 
     return (
-        <aside
-            className={`fixed inset-y-0 left-0 ${collapsed ? "w-10" : "w-64"} ${collapsed ? "" : "border-r-2 border-amber-300"} z-20 bg-stone-800`}
-        >
+        <>
+        {!collapsed && <button type="button" className="tool-nav-backdrop" aria-label="Dismiss navigation" onClick={() => setIsCollapsed(true)} />}
+        <aside className={`tool-nav ${collapsed ? "" : "tool-nav--expanded"}`}>
+            <Link href="/" className="tool-brand" aria-label="CTF Army Knife home" onClick={() => setIsCollapsed(true)}>
+                <span className="tool-brand-mark"><ToolIcon name="terminal" /></span>
+                {!collapsed && <span className="tool-brand-name">ARMY KNIFE<small>TECH HOUSE · BLR</small></span>}
+            </Link>
             <button
                 type="button"
                 aria-label={collapsed ? "Open navigation" : "Close navigation"}
                 aria-expanded={!collapsed}
                 onClick={() => setIsCollapsed(!collapsed)}
-                className="absolute top-4 left-4 flex h-10 w-10 items-center justify-center rounded-full border border-stone-700 bg-stone-900 text-amber-300 hover:bg-stone-800 shadow-md transition-colors cursor-pointer"
+                className="tool-nav-toggle"
             >
-                {collapsed ? ">" : "X"}
+                <ToolIcon name={collapsed ? "menu" : "close"} />
+                {!collapsed && <span>Tool directory</span>}
             </button>
-            {!collapsed && (
-                <div
-                    className="fixed left-64 top-0 z-10 bg-black/60 h-full w-full"
-                    onClick={() => setIsCollapsed(true)}
-                />
-            )}
-            <nav
-                className={`absolute w-full top-15 flex-1 space-y-2 p-3 h-full`}
-            >
+            <nav className="tool-nav-links" aria-label="Tools">
                 {menuItems.map((item) => {
                     return (
                         <Link
                             key={item.name}
                             href={item.href}
-                            className={`flex items-center gap-4 rounded-lg px-3 py-3 text-sm font-medium text-amber-300 hover:bg-stone-900 hover:text-amber-500 transition-all overflow-hidden ${collapsed ? "hidden" : ""}`}
-                            title={collapsed ? item.name : ""}
+                            className={`tool-nav-link ${pathname === item.href ? "is-active" : ""}`}
+                            aria-label={item.name}
+                            aria-current={pathname === item.href ? "page" : undefined}
+                            title={item.name}
                             onClick={() => {
                                 setIsCollapsed(true);
                             }}
                         >
-                            {!collapsed && (
-                                <span className="animate-fadeIn">
-                                    {item.name}
-                                </span>
-                            )}
+                            <ToolIcon name={item.icon} />
+                            {!collapsed && <><span>{item.name}</span><small>{item.number}</small></>}
                         </Link>
                     );
                 })}
             </nav>
+            <div className="tool-nav-footer"><span className="tool-community-mark">TH</span>{!collapsed && <span>Built for the curious.<small>A Tech House community project</small></span>}</div>
         </aside>
+        </>
     );
 }
