@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
         "out/**",
         "build/**",
         "next-env.d.ts",
+        "vendor/**",
+        ".cache/**",
+        "public/tools/cyberchef/**",
+        "integration/cyberchef/bridge.js",
     ]),
 ]);
 
