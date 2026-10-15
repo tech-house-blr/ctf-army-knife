@@ -9,8 +9,8 @@ export default function Sidebar() {
     const menuItems = [
         { name: "Dashboard", href: "/" },
         { name: "Cryptogram Solver", href: "/cryptogramSolver" },
-        { name: "CyberChef", href: "/cyberChef" },
-        { name: "AperiSolve", href: "/aperiSolve" },
+        { name: "CyberChef", href: "/cyberchef" },
+        { name: "AperiSolve", href: "/aperisolve" },
         { name: "GPG Decoder", href: "/gpgDecoder" },
     ];
 
@@ -19,6 +19,9 @@ export default function Sidebar() {
             className={`fixed inset-y-0 left-0 ${collapsed ? "w-10" : "w-64"} ${collapsed ? "" : "border-r-2 border-amber-300"} z-20 bg-stone-800`}
         >
             <button
+                type="button"
+                aria-label={collapsed ? "Open navigation" : "Close navigation"}
+                aria-expanded={!collapsed}
                 onClick={() => setIsCollapsed(!collapsed)}
                 className="absolute top-4 left-4 flex h-10 w-10 items-center justify-center rounded-full border border-stone-700 bg-stone-900 text-amber-300 hover:bg-stone-800 shadow-md transition-colors cursor-pointer"
             >

@@ -1,0 +1,72 @@
+/* CTF Army Knife community theme. Upstream themes remain selectable. */
+html.ctf-community {
+    color-scheme: dark;
+    --ctf-background: #292524;
+    --ctf-panel: #1c1917;
+    --ctf-border: #57534e;
+    --ctf-text: #f5f5f4;
+    --ctf-accent: #fcd34d;
+}
+html.ctf-community body,
+html.ctf-community #content-wrapper,
+html.ctf-community #workspace-wrapper {
+    background: var(--ctf-background);
+    color: var(--ctf-text);
+}
+html.ctf-community .title,
+html.ctf-community #banner,
+html.ctf-community #controls,
+html.ctf-community .modal-content,
+html.ctf-community .dropdown-menu,
+html.ctf-community .card,
+html.ctf-community .operation {
+    background: var(--ctf-panel);
+    color: var(--ctf-text);
+    border-color: var(--ctf-border);
+}
+html.ctf-community a,
+html.ctf-community .title,
+html.ctf-community .btn-primary,
+html.ctf-community .btn-secondary,
+html.ctf-community .material-icons {
+    color: var(--ctf-accent);
+}
+html.ctf-community .form-control,
+html.ctf-community select,
+html.ctf-community textarea,
+html.ctf-community input,
+html.ctf-community .cm-editor,
+html.ctf-community .cm-content,
+html.ctf-community .cm-gutters {
+    background-color: var(--ctf-panel);
+    color: var(--ctf-text);
+    border-color: var(--ctf-border);
+    caret-color: var(--ctf-accent);
+}
+html.ctf-community .cm-focused .cm-selectionBackground,
+html.ctf-community .cm-selectionBackground,
+html.ctf-community ::selection { background-color: #854d0e; }
+html.ctf-community .cm-activeLine,
+html.ctf-community .cm-activeLineGutter { background-color: #44403c; }
+html.ctf-community input::placeholder,
+html.ctf-community textarea::placeholder,
+html.ctf-community .bmd-help { color: #a8a29e; }
+html.ctf-community .btn-success,
+html.ctf-community #bake {
+    background: var(--ctf-accent);
+    color: #1c1917;
+}
+html.ctf-community #bake .material-icons { color: #1c1917; }
+html.ctf-community .btn-danger,
+html.ctf-community .text-danger { color: #fca5a5; }
+html.ctf-community .text-warning { color: #fdba74; }
+html.ctf-community .gutter { background-color: var(--ctf-border); }
+html.ctf-community :focus-visible {
+    outline: 2px solid var(--ctf-accent);
+    outline-offset: 2px;
+}
+/* Preserve the upstream minimum pane widths on small screens. */
+@media (max-width: 1050px) {
+    html body { overflow-x: auto; }
+    #content-wrapper { min-width: 1024px; }
+}
