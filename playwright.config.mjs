@@ -8,12 +8,12 @@ export default defineConfig({
     forbidOnly: Boolean(process.env.CI),
     retries: process.env.CI ? 1 : 0,
     reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
-    use: { baseURL: "http://127.0.0.1:4000", trace: "retain-on-failure" },
+    use: { baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:4000", trace: "retain-on-failure" },
     projects: [
         { name: "chromium", use: { ...devices["Desktop Chrome"] } },
         { name: "firefox", use: { ...devices["Desktop Firefox"] } },
     ],
-    webServer: {
+    webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : {
         command: "npm run start",
         url: "http://127.0.0.1:4000",
         reuseExistingServer: false,

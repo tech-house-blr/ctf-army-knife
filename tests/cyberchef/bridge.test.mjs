@@ -49,6 +49,15 @@ test("ready is emitted only after the application and workers initialize; ping s
     assert.equal(frame.messages.length, 2);
 });
 
+test("upstream startup history updates cannot erase an incoming recipe", () => {
+    const frame = workspace();
+    frame.window.history.replaceState({}, "", frame.location.pathname);
+    assert.equal(frame.location.hash, "#recipe=To_Hex()");
+    frame.loaded();
+    frame.window.history.replaceState({}, "", frame.location.pathname);
+    assert.equal(frame.location.hash, "");
+});
+
 test("rejects wrong-origin, wrong-window, wrong-channel, and malformed navigation", () => {
     const frame = workspace();
     frame.loaded();

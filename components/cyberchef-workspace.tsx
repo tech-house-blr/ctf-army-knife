@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ToolIcon from "@/components/tool-icon";
 
 const channel = "ctf-army-knife:cyberchef:v1";
 type Status = "loading" | "ready" | "error";
 
 export default function CyberChefWorkspace({ entry, version }: { entry: string; version: string }) {
     const iframe = useRef<HTMLIFrameElement>(null);
+    // Capture before the App Router's initial history replacement. URL
+    // fragments are not present in the server's canonical URL.
+    const initialHash = useRef(typeof window === "undefined" ? "" : window.location.hash);
     const currentHash = useRef("");
     const [source, setSource] = useState<string | null>(null);
     const [attempt, setAttempt] = useState(0);
@@ -21,11 +25,14 @@ export default function CyberChefWorkspace({ entry, version }: { entry: string; 
         }, 60_000);
 
         const navigate = () => {
+            if (window.location.hash === currentHash.current) return;
             currentHash.current = window.location.hash;
             setDirectLink(entry + currentHash.current);
-            iframe.current?.contentWindow?.postMessage(
-                { channel, type: "navigate", hash: currentHash.current }, window.location.origin,
-            );
+            // History traversal starts a clean worker session. Old asynchronous
+            // input updates must not overwrite the destination recipe.
+            setStatus("loading");
+            setSource(null);
+            setAttempt((value) => value + 1);
         };
         const receive = (event: MessageEvent) => {
             if (event.origin !== window.location.origin || event.source !== iframe.current?.contentWindow) return;
@@ -59,7 +66,10 @@ export default function CyberChefWorkspace({ entry, version }: { entry: string; 
         window.addEventListener("popstate", navigate);
         // Initialize from the browser URL after listeners are established.
         const animation = window.requestAnimationFrame(() => {
-            currentHash.current = window.location.hash;
+            currentHash.current = attempt === 0 ? initialHash.current : window.location.hash;
+            if (window.location.hash !== currentHash.current) {
+                window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search + currentHash.current);
+            }
             setDirectLink(entry + currentHash.current);
             setSource(entry + currentHash.current);
         });
@@ -89,23 +99,22 @@ export default function CyberChefWorkspace({ entry, version }: { entry: string; 
     }
 
     return (
-        <main className="ml-16 flex h-dvh min-h-96 flex-col bg-stone-800 text-stone-100">
-            <header className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-600 px-4 py-3">
-                <div>
-                    <h1 className="text-xl font-semibold text-amber-300">CyberChef</h1>
-                    <p className="text-xs text-stone-300">Community build · v{version} · Powered by GCHQ CyberChef</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-3 text-sm">
-                    <button onClick={copyLink} className="rounded border border-stone-500 px-3 py-2 text-amber-300 focus-visible:outline-2 focus-visible:outline-amber-300">Copy workspace link</button>
-                    <a href={directLink} target="_blank" rel="noopener noreferrer" className="rounded border border-stone-500 px-3 py-2 text-amber-300 focus-visible:outline-2 focus-visible:outline-amber-300">Open workspace directly</a>
-                    <span role="status" className="text-xs text-stone-300">{copyStatus}</span>
+        <main className="chef-shell">
+            <header className="chef-header">
+                <div className="chef-heading-row">
+                    <div><div className="chef-heading"><ToolIcon name="lab" /><h1>CyberChef</h1></div><p className="chef-description">Decode, transform, explore.</p></div>
+                    <div className="chef-actions">
+                        <button onClick={copyLink} className="chef-button" aria-label="Copy workspace link"><ToolIcon name={copyStatus === "Link copied" ? "check" : "link"} /><span>{copyStatus === "Link copied" ? "Copied" : "Copy link"}</span></button>
+                        <a href={directLink} target="_blank" rel="noopener noreferrer" className="chef-button" aria-label="Open workspace directly"><span>Open separately</span><ToolIcon name="external" /></a>
+                    </div>
                 </div>
             </header>
-            <div className="relative min-h-0 flex-1">
+            <div className="chef-workspace-frame">
                 {status !== "ready" && (
-                    <div role={status === "error" ? "alert" : "status"} className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-stone-800 px-6 text-center">
+                    <div role={status === "error" ? "alert" : "status"} className="chef-loading">
+                        <span className={`chef-loading-mark ${status === "loading" ? "is-loading" : ""}`}><ToolIcon name="lab" /></span>
                         <p>{status === "error" ? "CyberChef could not finish loading. Retry or open the workspace directly." : "Loading CyberChef and its workers…"}</p>
-                        {status === "error" && <button onClick={retry} className="rounded bg-amber-300 px-4 py-2 font-medium text-stone-900">Retry loading</button>}
+                        {status === "error" && <button onClick={retry} className="chef-button chef-button--primary">Retry loading</button>}
                     </div>
                 )}
                 {source && (
@@ -114,13 +123,14 @@ export default function CyberChefWorkspace({ entry, version }: { entry: string; 
                         ref={iframe}
                         title="CyberChef workspace"
                         src={source}
-                        className="h-full w-full border-0"
+                        className="chef-iframe"
                         allow="clipboard-read; clipboard-write; fullscreen"
                         onLoad={() => iframe.current?.contentWindow?.postMessage({ channel, type: "ping" }, window.location.origin)}
                         onError={() => setStatus("error")}
                     />
                 )}
             </div>
+            <footer className="chef-footer"><span className={`chef-live-status ${status === "ready" ? "is-ready" : ""}`}><i />{status === "ready" ? "Workspace ready" : status === "error" ? "Connection interrupted" : "Preparing workspace"}</span><span className="chef-copy-status" role="status">{copyStatus}</span><span className="chef-credit">Powered by GCHQ CyberChef <span>v{version}</span></span></footer>
         </main>
     );
 }
