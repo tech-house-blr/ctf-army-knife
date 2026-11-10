@@ -42,23 +42,31 @@ type ViewTransitionDocument = Document & {
 };
 
 /**
- * Switch theme with a circular reveal growing from `origin` (the toggle's
- * centre), using the View Transitions API. Falls back to an instant swap where
- * that's unsupported or the user prefers reduced motion.
+ * Switch theme with a circular reveal growing from the centre of `source` (the
+ * toggle that was clicked), using the View Transitions API. Falls back to an
+ * instant swap where that's unsupported or the user prefers reduced motion.
  */
-export function switchTheme(theme: Theme, origin?: { x: number; y: number }): void {
+export function switchTheme(theme: Theme, source?: HTMLElement): void {
     const doc = document as ViewTransitionDocument;
     if (!doc.startViewTransition || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         applyTheme(theme);
         return;
     }
-    const { x, y } = origin ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const rect = source?.getBoundingClientRect();
+    const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+    const y = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
     const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    // The browser drops :hover while a view transition runs, so the clicked
+    // control would lose its highlight on click and get it back at the end.
+    // data-held keeps it lit throughout (styled like :hover).
+    if (source) source.dataset.held = "";
     document.documentElement.dataset.themeSwitching = "";
+    // Only the CyberChef frame needs a moment to repaint (it follows via a
+    // storage event); elsewhere the wait would just freeze the page on click.
+    const hasFrame = document.querySelector("iframe") !== null;
     const transition = doc.startViewTransition(async () => {
         applyTheme(theme);
-        // Give the CyberChef frame (which follows via a storage event) a moment to repaint.
-        await new Promise((resolve) => setTimeout(resolve, 40));
+        if (hasFrame) await new Promise((resolve) => setTimeout(resolve, 40));
     });
     transition.ready
         .then(() =>
@@ -70,5 +78,8 @@ export function switchTheme(theme: Theme, origin?: { x: number; y: number }): vo
                 .finished,
         )
         .catch(() => {})
-        .finally(() => delete document.documentElement.dataset.themeSwitching);
+        .finally(() => {
+            delete document.documentElement.dataset.themeSwitching;
+            if (source) delete source.dataset.held;
+        });
 }
