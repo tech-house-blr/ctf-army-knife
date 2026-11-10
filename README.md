@@ -15,8 +15,10 @@ An all-in-one web app of tools for CTFs:
 docker compose up --build
 ```
 
-The web UI is on http://localhost:4000 and the API is on http://localhost:8000.
-The first build takes a while because it compiles CyberChef.
+Open http://localhost:4000. The browser only talks to the web container, which
+proxies `/api/*` to the API container. The first build takes a while because it
+compiles CyberChef; after that it is cached until `vendor/`, `integration/` or
+`scripts/` change.
 
 ### Local development
 
@@ -34,12 +36,16 @@ pip install -r requirements-dev.txt
 uvicorn ctf_api.main:app --reload --port 8000
 ```
 
+The web app proxies `/api/*` to `API_URL` (default `http://127.0.0.1:8000`),
+so frontend code always calls same-origin paths like `fetch("/api/solve")`.
+
 ## Repository layout
 
 ```
 apps/
   web/                    Next.js frontend (npm workspace)
     app/<tool-slug>/      one route per tool, kebab-case
+    app/api/[...path]/    same-origin proxy to the API
     lib/tools/registry.ts the list of tools shown in the sidebar and dashboard
     lib/tools/<tool>/     client-side logic for a tool (e.g. gpg-decoder/)
   api/                    FastAPI backend
@@ -64,8 +70,11 @@ docs/                     longer-form documentation
 3. Put the tool's logic in `apps/web/lib/tools/<slug>/` if it runs in the
    browser. If it needs the server, put it in `apps/api/ctf_api/tools/<name>/`
    with a `router.py`, register the router in `ctf_api/main.py`, and set
-   `needsApi: true` in the registry.
+   `needsApi: true` in the registry. Call it from the page as `/api/...`.
 4. Add tests under `tests/web/` or `apps/api/tests/`.
+
+`npm run test:unit` fails if a registry entry has no page, or a page is missing
+from the registry.
 
 ## Tests
 
