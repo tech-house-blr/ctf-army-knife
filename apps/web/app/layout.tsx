@@ -30,8 +30,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                     Skip to content
                 </a>
                 <Sidebar />
-                {/* The rail is fixed and 232px wide from 1280px up; keep content clear of it. */}
-                <div id="content" className="flex min-w-0 flex-col xl:pl-58">{children}</div>
+                {/* The rail is fixed and 264px wide from 1280px up; keep content clear of it. */}
+                <div id="content" className="flex min-w-0 flex-col xl:pl-66">{children}</div>
             </body>
         </html>
     );
