@@ -1,8 +1,40 @@
 name: CyberChef integration
 
+# Slow (~14 min): Windows build, upstream tests and Playwright browser tests.
+# Only runs when something CyberChef depends on changes; ci.yml covers the rest.
 on:
   push:
+    paths:
+      - "vendor/cyberchef/**"
+      - "integration/cyberchef/**"
+      - "scripts/cyberchef*.mjs"
+      - "tests/cyberchef/**"
+      - "tests/browser/**"
+      - "playwright.config.mjs"
+      - "apps/web/app/cyberchef/**"
+      - "apps/web/app/layout.tsx"
+      - "apps/web/app/globals.css"
+      - "apps/web/components/**"
+      - "apps/web/next.config.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/cyberchef.yml"
   pull_request:
+    paths:
+      - "vendor/cyberchef/**"
+      - "integration/cyberchef/**"
+      - "scripts/cyberchef*.mjs"
+      - "tests/cyberchef/**"
+      - "tests/browser/**"
+      - "playwright.config.mjs"
+      - "apps/web/app/cyberchef/**"
+      - "apps/web/app/layout.tsx"
+      - "apps/web/app/globals.css"
+      - "apps/web/components/**"
+      - "apps/web/next.config.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/cyberchef.yml"
 
 jobs:
   build:
@@ -24,7 +56,7 @@ jobs:
         with:
           path: |
             .cache/cyberchef
-            public/tools/cyberchef
+            apps/web/public/tools/cyberchef
           key: ${{ runner.os }}-cyberchef-node24.18.0-v1-${{ hashFiles('vendor/cyberchef/**', 'integration/cyberchef/**', 'scripts/cyberchef*.mjs') }}
       - run: npm ci
       - run: npm run test:integration
