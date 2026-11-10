@@ -150,7 +150,9 @@ without permission.
 The CTF Army Knife icon is pixel art made with PixelLab (64x64 original in
 `apps/web/public/brand/army-knife-64.png`). It is only ever shown at whole-number
 scales (favicon `apps/web/app/icon.png` at 32 px, 2x/3x/8x copies for the home
-page, Apple touch icon and web manifest) so its pixels stay sharp.
+page, Apple touch icon and web manifest) so its pixels stay sharp. The 16 px
+favicon (`apps/web/app/icon1.png`) is hand-placed from it with
+`scripts/army-knife-icon-16.py`, since no generated 16 px version held up.
 
 Fonts in `apps/web/public/fonts` are under the SIL Open Font License (see the
 `OFL-*.txt` files beside them): IBM Plex Sans and Mono for the interface, and
