@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TechHouseMark, TechHouseWordmark } from "@/components/brand";
+import { TechHouseLogo, TechHouseMark } from "@/components/brand";
 import Icon from "@/components/icons";
 import SmartInput from "@/components/smart-input";
 import { LINKS } from "@/lib/links";
@@ -18,8 +18,8 @@ export default function Home() {
                     aria-label="Tech House BLR website"
                     className="flex items-end gap-3 rounded-md p-1 opacity-90 no-underline transition-opacity duration-100 hover:opacity-100"
                 >
-                    <TechHouseMark size="md" />
-                    <TechHouseWordmark size="md" className="max-[359px]:hidden" />
+                    <TechHouseLogo size="md" className="max-[359px]:hidden" />
+                    <TechHouseMark size="md" className="min-[360px]:hidden" />
                 </a>
             </header>
 

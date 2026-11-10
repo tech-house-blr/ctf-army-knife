@@ -139,12 +139,13 @@ and the Next.js server serves it. See
 
 ## Branding and licences
 
-The interface carries the Tech House BLR logo (`apps/web/components/brand.tsx`,
-traced from the brand PNGs and rendered at fixed pixel-exact sizes so it stays
-sharp, and `apps/web/app/icon.svg`). The
-Tech House brand assets are CC BY-NC-ND 4.0 and belong to Tech House BLR; they
-are not covered by this repository's code licence, so don't reuse or modify
-them outside this project without permission.
+The interface carries the Tech House BLR logo: the original brand images from
+the Tech House website, trimmed and exported at their display sizes in
+`apps/web/public/brand` (used by `apps/web/components/brand.tsx`), and the mark
+as the favicon (`apps/web/app/icon.png`). The Tech House brand assets are
+CC BY-NC-ND 4.0 and belong to Tech House BLR; they are not covered by this
+repository's code licence, so don't reuse or modify them outside this project
+without permission.
 
 Fonts in `apps/web/public/fonts` are under the SIL Open Font License (see the
 `OFL-*.txt` files beside them): IBM Plex Sans and Mono for the interface, and
