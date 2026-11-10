@@ -10,9 +10,8 @@ type Solution = {
 };
 type Mapping = { cipher: string; plain: string };
 
-const solverUrl =
-    process.env.NEXT_PUBLIC_SOLVER_API_URL ?? "http://localhost:8000/api/solve";
-console.log(solverUrl);
+// Same-origin; app/api/[...path]/route.ts proxies this to the Python API.
+const solverUrl = "/api/solve";
 
 export default function CryptogramSolverPage() {
     const [ciphertext, setCiphertext] = useState("GSV JFRXP YILDM ULC");

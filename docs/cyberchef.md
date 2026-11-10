@@ -90,7 +90,7 @@ offline. The integration adds no analytics or input-upload endpoint.
 
 ## Deployment and rollback
 
-Deploy the complete Next.js build **and** `public/tools/cyberchef`, including its
+Deploy the complete Next.js build **and** `apps/web/public/tools/cyberchef`, including its
 manifest and every versioned asset, from the same build job. A standalone Next.js
 package also needs the public directory copied into its runtime image. Configure
 any reverse proxy to preserve static asset paths, WASM MIME types, and same-origin

@@ -3,6 +3,13 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
     /* config options here */
     reactCompiler: true,
+    // Keep old camelCase tool URLs working after the switch to kebab-case.
+    async redirects() {
+        return [
+            { source: "/cryptogramSolver", destination: "/cryptogram-solver", permanent: true },
+            { source: "/gpgDecoder", destination: "/gpg-decoder", permanent: true },
+        ];
+    },
     async headers() {
         return [
             {
