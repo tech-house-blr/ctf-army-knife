@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readEvents, errorMessage, ANALYZER_INFO } from "../../apps/web/lib/tools/aperisolve/client.ts";
+import { readEvents, errorMessage, untilDone, ANALYZER_INFO, INCOMPLETE_ANALYSIS } from "../../apps/web/lib/tools/aperisolve/client.ts";
+import { formatBytes } from "../../apps/web/lib/format.ts";
 
 const streamOf = (...chunks) => new ReadableStream({
     start(controller) {
@@ -37,4 +38,28 @@ test("every backend analyzer has a label and description", () => {
         "pngcheck", "pcrt", "identify", "steghide", "zsteg", "strings"]) {
         assert.ok(ANALYZER_INFO[name]?.label && ANALYZER_INFO[name]?.description, name);
     }
+});
+
+test("a stream that ends without its done event is reported as incomplete", async () => {
+    const seen = [];
+    await assert.rejects(async () => {
+        for await (const event of untilDone(readEvents(streamOf('{"event":"start","id":"x"}\n{"event":"result","analyzer":"file"}\n')))) {
+            seen.push(event.event);
+        }
+    }, { message: INCOMPLETE_ANALYSIS });
+    assert.deepEqual(seen, ["start", "result"]);
+});
+
+test("a complete stream passes through untilDone unchanged", async () => {
+    const seen = [];
+    for await (const event of untilDone(readEvents(streamOf('{"event":"start"}\n{"event":"done","duration_ms":1}\n')))) {
+        seen.push(event.event);
+    }
+    assert.deepEqual(seen, ["start", "done"]);
+});
+
+test("byte sizes format consistently", () => {
+    assert.equal(formatBytes(512), "512 B");
+    assert.equal(formatBytes(1536), "1.5 KiB");
+    assert.equal(formatBytes(10 * 1024 * 1024), "10.0 MiB");
 });

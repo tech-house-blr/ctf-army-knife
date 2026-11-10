@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import FileDrop from "@/components/file-drop";
+import { formatBytes } from "@/lib/format";
 import {
     ANALYZER_INFO,
-    MAX_UPLOAD_BYTES,
+    DEFAULT_MAX_UPLOAD_BYTES,
     analyze,
-    formatBytes,
+    fetchUploadLimit,
     type AnalyzerResult,
     type FileInfo,
 } from "@/lib/tools/aperisolve/client";
@@ -26,7 +27,15 @@ export default function AperiSolvePage() {
     const [info, setInfo] = useState<FileInfo | null>(null);
     const [slots, setSlots] = useState<Slot[]>([]);
     const [elapsed, setElapsed] = useState<number | null>(null);
+    const [maxBytes, setMaxBytes] = useState(DEFAULT_MAX_UPLOAD_BYTES);
     const controller = useRef<AbortController | null>(null);
+
+    // The limit is configured on the API (APERISOLVE_MAX_UPLOAD_BYTES), so ask it.
+    useEffect(() => {
+        const abort = new AbortController();
+        void fetchUploadLimit(abort.signal).then((limit) => { if (limit) setMaxBytes(limit); });
+        return () => abort.abort();
+    }, []);
 
     const preview = useMemo(() => (file?.type.startsWith("image/") ? URL.createObjectURL(file) : null), [file]);
     useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
@@ -82,9 +91,9 @@ export default function AperiSolvePage() {
                         setInfo(null);
                         setError("");
                     }}
-                    maxBytes={MAX_UPLOAD_BYTES}
+                    maxBytes={maxBytes}
                     disabled={running}
-                    hint={`PNG, JPEG, BMP, GIF, WAV, or any file up to ${formatBytes(MAX_UPLOAD_BYTES)}`}
+                    hint={`PNG, JPEG, BMP, GIF, WAV, or any file up to ${formatBytes(maxBytes)}`}
                 />
                 {preview && (
                     // eslint-disable-next-line @next/next/no-img-element -- local object URL preview
@@ -124,17 +133,17 @@ export default function AperiSolvePage() {
                             {elapsed !== null && ` · ${(elapsed / 1000).toFixed(1)}s`}
                         </span>
                     </div>
-                    {slots.map((slot) => <ResultCard key={slot.name} slot={slot} />)}
+                    {slots.map((slot) => <ResultCard key={slot.name} slot={slot} running={running} />)}
                 </section>
             )}
         </main>
     );
 }
 
-function ResultCard({ slot }: { slot: Slot }) {
+function ResultCard({ slot, running }: { slot: Slot; running: boolean }) {
     const { label, description } = ANALYZER_INFO[slot.name] ?? { label: slot.name, description: "" };
     const result = slot.result;
-    const status = !result ? "running…" : result.status === "ok" ? "done" : result.status === "unavailable" ? "not installed" : "nothing found";
+    const status = !result ? (running ? "running…" : "did not finish") : result.status === "ok" ? "done" : result.status === "unavailable" ? "not installed" : "nothing found";
     const tone = !result ? "text-stone-300" : result.status === "ok" ? "text-amber-300" : "text-stone-400";
 
     return (
