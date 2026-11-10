@@ -10,7 +10,19 @@ export default function Home() {
     return (
         <main className="w-full max-w-295 px-4 pt-6 pb-16 sm:px-6 sm:pt-8 xl:px-10">
             <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
-                <h1 className="font-display text-4xl leading-none sm:text-5xl">CTF Army Knife</h1>
+                <div className="flex items-center gap-4">
+                    {/* PixelLab pixel art, shown at whole-number scales only (32 px, 64 px) to stay sharp. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element -- fixed-size pixel art */}
+                    <img
+                        src="/brand/army-knife-64.png"
+                        srcSet="/brand/army-knife-64.png 1x, /brand/army-knife-128.png 2x"
+                        width={64}
+                        height={64}
+                        alt=""
+                        className="size-8 shrink-0 [image-rendering:pixelated] sm:size-16"
+                    />
+                    <h1 className="font-display text-4xl leading-none sm:text-5xl">CTF Army Knife</h1>
+                </div>
                 <a
                     href={LINKS.website}
                     target="_blank"
