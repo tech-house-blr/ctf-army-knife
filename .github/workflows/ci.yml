@@ -46,3 +46,17 @@ jobs:
           cache-dependency-path: apps/api/requirements*.txt
       - run: pip install -r requirements-dev.txt
       - run: pytest
+
+  # Tests that need steghide, zsteg, binwalk etc. skip on the plain runner above;
+  # here they run inside the real API image, read-only like in production.
+  api-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t ctf-army-knife-api apps/api
+      - name: Run API tests inside the image
+        run: |
+          docker run --rm -u root \
+            -v "$PWD/apps/api/tests:/app/tests:ro" -v "$PWD/apps/api/pytest.ini:/app/pytest.ini:ro" \
+            ctf-army-knife-api sh -c \
+            "pip install -q --root-user-action=ignore pytest httpx && su api -s /bin/sh -c 'cd /app && python -m pytest -rs'"

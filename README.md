@@ -4,7 +4,7 @@ An all-in-one web app of tools for CTFs:
 
 1. GPG/PGP Decoder
 2. CyberChef
-3. AperiSolve (planned)
+3. AperiSolve: image steganography analysis
 4. Cryptogram Solver
 
 ## Quick start
@@ -108,6 +108,21 @@ npm run lint
 npm run test:browser              # Playwright; needs `npx playwright install`
 cd apps/api && pytest             # API
 ```
+
+## AperiSolve
+
+`/aperisolve` takes an upload and runs every applicable analyzer in parallel,
+streaming each result as it finishes: bit planes, colour remapping, PNG repair
+(PCRT), file, ExifTool, binwalk, foremost, pngcheck, identify, steghide, zsteg
+and strings, plus OutGuess with "Deep analysis". Generated images and extracted
+archives are kept for 30 minutes, then deleted.
+
+The analyzers are adapted from [AperiSolve](https://github.com/Zeecka/AperiSolve)
+(MIT); see `apps/api/ctf_api/tools/aperisolve/NOTICE`. Not ported (yet): jsteg,
+jpseek and OpenStego, which aren't packaged for Debian, and upstream's audio
+spectrogram and PDF analyzers. Limits are set with `APERISOLVE_*` environment
+variables in `ctf_api/tools/aperisolve/` (upload size, tool timeout, image size,
+result TTL, concurrent analyses).
 
 ## CyberChef integration
 
