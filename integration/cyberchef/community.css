@@ -170,6 +170,11 @@ html.ctf-community .title {
     text-transform: none;
 }
 
+/* Banner: only Options stays. CyberChef's own download, about/support and
+   notice are product chrome; the licence lives in NOTICE and the bundle. */
+html.ctf-community #banner a[data-target="#download-modal"],
+html.ctf-community #support,
+html.ctf-community #notice-wrapper { display: none !important; }
 /* Banner */
 html.ctf-community #banner { background: var(--ctf-panel); border-bottom: 1px solid var(--ctf-line); font-size: 12px; }
 html.ctf-community #notice { font: 12px var(--ctf-sans); color: var(--ctf-fg-3); letter-spacing: 0; }

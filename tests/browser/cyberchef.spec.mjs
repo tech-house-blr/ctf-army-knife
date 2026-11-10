@@ -110,6 +110,6 @@ test("missing worker gives a recovery action; retry recovers without losing the 
 test("narrow viewport keeps workspace and navigation available", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openWorkspace(page);
-    await expect(page.getByRole("link", { name: "Open workspace directly" })).toBeVisible();
+    await expect(page.locator('iframe[title="CyberChef workspace"]')).toBeVisible();
     await expect(page.getByRole("button", { name: "Open navigation" })).toBeVisible();
 });
