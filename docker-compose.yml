@@ -19,3 +19,8 @@ services:
     # ports: ["8000:8000"] to call the API directly from the host.
     expose:
       - "8000"
+    # Tool workspaces live in RAM with a hard cap, so an extraction bomb fills
+    # this tmpfs and fails instead of filling the host disk.
+    tmpfs:
+      - /tmp:size=1g,mode=1777
+    read_only: true
