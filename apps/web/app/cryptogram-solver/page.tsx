@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import PageHeader, { ToolPage } from "@/components/page-header";
+import { clearHandoff, peekHandoff } from "@/lib/handoff";
 
 type Solution = {
     plaintext: string;
@@ -21,7 +22,9 @@ const settingFields = [
 ] as const;
 
 export default function CryptogramSolverPage() {
-    const [ciphertext, setCiphertext] = useState("GSV JFRXP YILDM ULC");
+    // Input handed over from the home page replaces the sample and is solved straight away.
+    const [handed] = useState(() => peekHandoff("cryptogram-solver")?.text ?? null);
+    const [ciphertext, setCiphertext] = useState(handed ?? "GSV JFRXP YILDM ULC");
     const [mode, setMode] = useState("hybrid");
     const [settings, setSettings] = useState({ iterations: 6000, restarts: 12, results: 10 });
     const [mappings, setMappings] = useState<Mapping[]>([]);
@@ -40,8 +43,13 @@ export default function CryptogramSolverPage() {
         setMappings(mappings.map((item, i) => (i === index ? { ...item, [side]: value } : item)));
     }
 
-    async function solve(event: FormEvent<HTMLFormElement>) {
+
+    function solve(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
+        void solveNow();
+    }
+
+    async function solveNow() {
         setError("");
         const constraints: Record<string, string> = {};
         for (const mapping of mappings) {
@@ -78,6 +86,15 @@ export default function CryptogramSolverPage() {
             setSolving(false);
         }
     }
+
+    // After the functions it calls, which the React compiler requires.
+    useEffect(() => {
+        clearHandoff("cryptogram-solver");
+        if (handed === null) return;
+        const timer = setTimeout(() => void solveNow(), 0);
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- run once, for the handed-over input
+    }, []);
 
     return (
         <ToolPage>

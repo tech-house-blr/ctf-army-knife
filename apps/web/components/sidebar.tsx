@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { TechHouseMark, TechHouseWordmark } from "@/components/brand";
 import Icon, { type IconName } from "@/components/icons";
+import { LINKS } from "@/lib/links";
 import { readRailCollapsed, setRailCollapsed, subscribeRail } from "@/lib/rail";
 import { applyTheme, readTheme, subscribeTheme, type Theme } from "@/lib/theme";
 import { toolHref, toolsByCategory } from "@/lib/tools/registry";
@@ -94,6 +95,51 @@ function NavLinks({ onNavigate, rail = false }: { onNavigate?: () => void; rail?
     );
 }
 
+const rowClass =
+    "relative flex min-h-9 w-full items-center gap-3 rounded-md px-2.5 text-[0.9333rem] text-fg-2 no-underline transition-colors duration-100 hover:bg-raised/60 hover:text-fg";
+
+/** Project source, the Tech House website, and Tech House socials behind Support. */
+function FooterLinks({ rail = false }: { rail?: boolean }) {
+    const [supportOpen, setSupportOpen] = useState(false);
+    const label = (text: string) => <span className={`truncate ${rail ? whenCollapsed.label : ""}`}>{text}</span>;
+    const external = (href: string, text: string, icon: IconName, extraLabel?: string) => (
+        <a href={href} target="_blank" rel="noopener noreferrer" title={rail ? (extraLabel ?? text) : undefined} className={rowClass}>
+            <Icon name={icon} className="size-[18px] shrink-0" />
+            {label(text)}
+        </a>
+    );
+    return (
+        <ul className="flex flex-col gap-0.5">
+            <li>{external(LINKS.repo, "Source code", "github", "Source code on GitHub")}</li>
+            <li>{external(LINKS.website, "Tech House", "globe", "Tech House website")}</li>
+            <li>
+                <button
+                    type="button"
+                    onClick={() => setSupportOpen(!supportOpen)}
+                    aria-expanded={supportOpen}
+                    aria-controls={`support-${rail ? "r" : "m"}`}
+                    title={rail ? "Support Tech House" : undefined}
+                    className={rowClass}
+                >
+                    <Icon name="heart" className={`size-[18px] shrink-0 ${supportOpen ? "text-signal" : ""}`} />
+                    {label("Support")}
+                    <Icon
+                        name="chevron"
+                        className={`ml-auto size-3.5 shrink-0 transition-transform duration-150 ${supportOpen ? "-rotate-90" : "rotate-90"} ${rail ? whenCollapsed.hide : ""}`}
+                    />
+                </button>
+                {supportOpen && (
+                    <ul id={`support-${rail ? "r" : "m"}`} className={`mt-0.5 flex flex-col gap-0.5 pl-7 ${rail ? "in-data-[rail=collapsed]:xl:pl-0" : ""}`}>
+                        {LINKS.socials.map((social) => (
+                            <li key={social.label}>{external(social.href, social.label, social.icon, `Tech House on ${social.label}`)}</li>
+                        ))}
+                    </ul>
+                )}
+            </li>
+        </ul>
+    );
+}
+
 /** A fixed, collapsible rail on wide screens; a top bar with a full-screen menu below 1280px. */
 export default function Sidebar() {
     const [open, setOpen] = useState(false);
@@ -125,7 +171,10 @@ export default function Sidebar() {
                 <div className="mt-7 flex-1 overflow-x-hidden overflow-y-auto">
                     <NavLinks rail />
                 </div>
-                <div className="flex items-center justify-between gap-1 in-data-[rail=collapsed]:flex-col-reverse">
+                <div className="mt-3 border-t border-line pt-3">
+                    <FooterLinks rail />
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-1 in-data-[rail=collapsed]:flex-col-reverse">
                     <CollapseToggle />
                     <ThemeToggle />
                 </div>
@@ -150,6 +199,9 @@ export default function Sidebar() {
             {open && (
                 <div id="mobile-nav" className="fixed inset-x-0 top-13 bottom-0 z-30 overflow-y-auto bg-rail px-4 pt-5 pb-10 sm:px-6 xl:hidden">
                     <NavLinks onNavigate={() => setOpen(false)} />
+                    <div className="mt-6 border-t border-line pt-4">
+                        <FooterLinks />
+                    </div>
                 </div>
             )}
         </>
