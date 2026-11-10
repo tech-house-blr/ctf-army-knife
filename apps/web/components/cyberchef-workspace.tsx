@@ -86,7 +86,7 @@ export default function CyberChefWorkspace({ entry }: { entry: string }) {
     return (
         <main className="chef-shell">
             <header className="flex min-h-10 items-center px-4 pt-6 pb-4 sm:px-6 xl:px-10">
-                <h1 className="text-xl font-semibold tracking-tight">CyberChef</h1>
+                <h1 className="font-display text-2xl leading-none">CyberChef</h1>
             </header>
             <div className="chef-frame panel mx-4 mb-4 sm:mx-6 sm:mb-6 xl:mx-10">
                 {status !== "ready" && (

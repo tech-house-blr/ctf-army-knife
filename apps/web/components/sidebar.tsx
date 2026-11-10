@@ -3,6 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { TechHouseMark, TechHouseWordmark } from "@/components/brand";
 import { applyTheme, readTheme, subscribeTheme, type Theme } from "@/lib/theme";
 import { toolHref, toolsByCategory } from "@/lib/tools/registry";
 
@@ -78,8 +79,9 @@ export default function Sidebar() {
     }, [open]);
 
     const wordmark = (onClick?: () => void) => (
-        <Link href="/" onClick={onClick} className="text-[0.9333rem] font-semibold tracking-tight text-fg no-underline" aria-label="CTF Army Knife home">
-            Army Knife
+        <Link href="/" onClick={onClick} className="flex items-end gap-2.5 rounded-md no-underline" aria-label="Tech House BLR, CTF Army Knife home">
+            <TechHouseMark className="h-7 w-auto shrink-0" />
+            <TechHouseWordmark className="mb-0.5 h-3.75 w-auto" />
         </Link>
     );
 

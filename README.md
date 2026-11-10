@@ -133,3 +133,15 @@ upload limit from the API, but uploads above 25 MiB also need the proxy's
 CyberChef is built from a pinned upstream source subtree with a community theme,
 and the Next.js server serves it. See
 [setup, validation, deployment, and updates](docs/cyberchef.md).
+
+## Branding and licences
+
+The interface carries the Tech House BLR logo (`apps/web/components/brand.tsx`,
+traced pixel-for-pixel from the brand PNGs, and `apps/web/app/icon.svg`). The
+Tech House brand assets are CC BY-NC-ND 4.0 and belong to Tech House BLR; they
+are not covered by this repository's code licence, so don't reuse or modify
+them outside this project without permission.
+
+Fonts in `apps/web/public/fonts` are under the SIL Open Font License (see the
+`OFL-*.txt` files beside them): IBM Plex Sans and Mono for the interface, and
+BBH Hegarty, the Tech House display face, for names and titles.

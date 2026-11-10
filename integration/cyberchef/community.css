@@ -1,4 +1,5 @@
 /* CTF Army Knife community theme: the host app's graphite "instrument" look
+   with the Tech House green accent
    (apps/web/app/globals.css). bridge.js sets data-ctf-theme="light" when the
    app is in its light theme. Upstream themes remain selectable. */
 @font-face { font-family: "IBM Plex Sans"; src: /* webpackIgnore: true */ url("/fonts/ibm-plex-sans-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
@@ -17,11 +18,11 @@ html.ctf-community {
     --ctf-fg: #e7e8ea;
     --ctf-fg-2: #a0a4ab;
     --ctf-fg-3: #8a8e96;
-    --ctf-signal: #e3a84e;
-    --ctf-signal-soft: rgba(227, 168, 78, 0.12);
-    --ctf-on-signal: #1a1408;
+    --ctf-signal: #3ddc5b;
+    --ctf-signal-soft: rgba(61, 220, 91, 0.1);
+    --ctf-on-signal: #06140b;
     --ctf-danger: #ef7d70;
-    --ctf-selection: rgba(227, 168, 78, 0.22);
+    --ctf-selection: rgba(61, 220, 91, 0.2);
     --ctf-hl1: #24435a; --ctf-hl2: #4c3d1c; --ctf-hl3: #5a2a26; --ctf-hl4: #3d4a22; --ctf-hl5: #1f4a3c;
     --ctf-sans: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
     --ctf-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
@@ -37,11 +38,11 @@ html.ctf-community[data-ctf-theme="light"] {
     --ctf-fg: #17181a;
     --ctf-fg-2: #55585e;
     --ctf-fg-3: #6b6e75;
-    --ctf-signal: #9a6410;
-    --ctf-signal-soft: rgba(154, 100, 16, 0.1);
+    --ctf-signal: #1e7a34;
+    --ctf-signal-soft: rgba(30, 122, 52, 0.09);
     --ctf-on-signal: #ffffff;
     --ctf-danger: #b3261e;
-    --ctf-selection: rgba(154, 100, 16, 0.18);
+    --ctf-selection: rgba(30, 122, 52, 0.16);
     --ctf-hl1: #d4e2f0; --ctf-hl2: #f0e3c2; --ctf-hl3: #f4d3cf; --ctf-hl4: #e2e9c8; --ctf-hl5: #d2e8db;
 }
 
