@@ -15,6 +15,7 @@ EXTERNAL_TOOLS: dict[str, str] = {
     "exiftool": "exiftool",
     "file": "file",
     "foremost": "foremost",
+    "identify": "identify",
     "outguess": "outguess",
     "pngcheck": "pngcheck",
     "steghide": "steghide",
