@@ -6,8 +6,10 @@
     // iframe is same-origin, so it shares localStorage and its storage events.
     const themeKey = "ctf-army-knife:theme";
     function applyTheme(value) {
-        if (value === "light") document.documentElement.setAttribute("data-ctf-theme", "light");
-        else document.documentElement.removeAttribute("data-ctf-theme");
+        const root = document.documentElement;
+        if (!root) return;
+        if (value === "light") root.setAttribute("data-ctf-theme", "light");
+        else root.removeAttribute("data-ctf-theme");
     }
     try { applyTheme(window.localStorage.getItem(themeKey)); } catch { /* storage blocked */ }
     window.addEventListener("storage", (event) => {
@@ -16,6 +18,10 @@
 
     const channel = "ctf-army-knife:cyberchef:v1";
     const embedded = window.parent !== window;
+    // Embedded, the host page shows the one loading state (and handles errors and
+    // retry), so community.css hides CyberChef's own preloader. An attribute, not a
+    // class: CyberChef replaces the root element's classes when it applies a theme.
+    if (embedded) document.documentElement?.setAttribute("data-ctf-embedded", "");
     let ready = false;
     let lastHash = window.location.hash;
     let applying = false;

@@ -171,6 +171,10 @@ html.ctf-community .title {
     text-transform: none;
 }
 
+/* One loading state: inside the app, the host page's overlay covers CyberChef until it
+   is ready, so CyberChef's own preloader would only flash a second loader after it. */
+html[data-ctf-embedded] #loader-wrapper { display: none !important; }
+
 /* Banner: only Options stays. CyberChef's own download, about/support and
    notice are product chrome; the licence lives in NOTICE and the bundle. */
 html.ctf-community #banner a[data-target="#download-modal"],

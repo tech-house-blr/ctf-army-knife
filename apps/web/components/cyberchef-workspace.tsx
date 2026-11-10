@@ -89,15 +89,21 @@ export default function CyberChefWorkspace({ entry }: { entry: string }) {
                 <h1 className="font-display text-2xl leading-none">CyberChef</h1>
             </header>
             <div className="chef-frame panel mx-4 mb-4 sm:mx-6 sm:mb-6 xl:mx-10">
-                {status !== "ready" && (
-                    <div role={status === "error" ? "alert" : "status"} className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-panel px-8 text-center">
-                        {status === "loading" && <span className="chef-progress" aria-hidden="true" />}
-                        <p className={status === "error" ? "error-text" : "text-fg-2"}>
-                            {status === "error" ? "CyberChef could not finish loading." : "Loading CyberChef and its workers…"}
-                        </p>
-                        {status === "error" && <button onClick={retry} className="btn btn-primary">Retry loading</button>}
-                    </div>
-                )}
+                {/* The only loading state (CyberChef's own preloader is hidden when embedded).
+                    It fades out once CyberChef is ready, then becomes invisible to everything. */}
+                <div
+                    role={status === "error" ? "alert" : "status"}
+                    aria-hidden={status === "ready"}
+                    className={`absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-panel px-8 text-center transition-[opacity,visibility] duration-300 ease-(--ease-liquid) ${
+                        status === "ready" ? "pointer-events-none invisible opacity-0" : "visible opacity-100"
+                    }`}
+                >
+                    {status !== "error" && <span className="chef-progress" aria-hidden="true" />}
+                    <p className={status === "error" ? "error-text" : "text-fg-2"}>
+                        {status === "error" ? "CyberChef could not finish loading." : "Loading CyberChef and its workers…"}
+                    </p>
+                    {status === "error" && <button onClick={retry} className="btn btn-primary">Retry loading</button>}
+                </div>
                 {source && (
                     <iframe
                         key={attempt}
