@@ -1,3 +1,5 @@
+import type { IconName } from "@/components/icons";
+
 /**
  * Single source of truth for every tool in the app. The sidebar and dashboard
  * read from this list, so adding a tool means one entry here plus its route at
@@ -7,6 +9,9 @@ export type Tool = {
     /** URL segment, kebab-case. The route lives at app/<slug>/page.tsx. */
     slug: string;
     name: string;
+    /** Browser tab title: as short as possible. */
+    title: string;
+    icon: IconName;
     description: string;
     category: "crypto" | "encoding" | "forensics" | "stego";
     status: "ready" | "planned";
@@ -18,6 +23,8 @@ export const tools: readonly Tool[] = [
     {
         slug: "cryptogram-solver",
         name: "Cryptogram Solver",
+        title: "Cryptogram",
+        icon: "cipher",
         description: "Break monoalphabetic substitution ciphers with frequency analysis and simulated annealing.",
         category: "crypto",
         status: "ready",
@@ -26,6 +33,8 @@ export const tools: readonly Tool[] = [
     {
         slug: "cyberchef",
         name: "CyberChef",
+        title: "CyberChef",
+        icon: "chef",
         description: "The full CyberChef operation catalog, served locally.",
         category: "encoding",
         status: "ready",
@@ -33,6 +42,8 @@ export const tools: readonly Tool[] = [
     {
         slug: "aperisolve",
         name: "AperiSolve",
+        title: "AperiSolve",
+        icon: "layers",
         description: "Image steganography analysis: bit planes, metadata, binwalk, steghide, zsteg and more.",
         category: "stego",
         status: "ready",
@@ -41,6 +52,8 @@ export const tools: readonly Tool[] = [
     {
         slug: "gpg-decoder",
         name: "GPG Decoder",
+        title: "GPG",
+        icon: "key",
         description: "Inspect OpenPGP packets in armored or binary messages.",
         category: "crypto",
         status: "ready",
@@ -64,4 +77,11 @@ export const toolsByCategory = () =>
         .filter((group) => group.tools.length > 0);
 
 export const toolBySlug = (slug: string) => tools.find((tool) => tool.slug === slug);
+
+/** Page metadata for a tool route: just its short title. */
+export function toolMetadata(slug: string) {
+    const tool = toolBySlug(slug);
+    if (!tool) throw new Error(`Unknown tool: ${slug}`);
+    return { title: tool.title };
+}
 

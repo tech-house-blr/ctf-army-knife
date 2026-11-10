@@ -1,17 +1,19 @@
 import type { Metadata, Viewport } from "next";
 import Sidebar from "@/components/sidebar";
+import { RAIL_STORAGE_KEY } from "@/lib/rail";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
-    title: "CTF Army Knife",
+    // Tab titles stay short so they fit a narrow tab: each tool sets just its own name.
+    title: "Army Knife",
     description: "Self-hosted tools for capture-the-flag challenges: ciphers, encodings, steganography and forensics.",
 };
 
 export const viewport: Viewport = { themeColor: "#131416" };
 
-// Applies the saved theme before first paint, so a light-theme user never sees a dark flash.
-const themeScript = `try{if(localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)})==="light")document.documentElement.dataset.theme="light"}catch(e){}`;
+// Applies the saved theme and rail state before first paint, so neither flashes.
+const themeScript = `try{var d=document.documentElement.dataset;if(localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)})==="light")d.theme="light";if(localStorage.getItem(${JSON.stringify(RAIL_STORAGE_KEY)})==="collapsed")d.rail="collapsed"}catch(e){}`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
     return (
@@ -30,8 +32,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                     Skip to content
                 </a>
                 <Sidebar />
-                {/* The rail is fixed and 264px wide from 1280px up; keep content clear of it. */}
-                <div id="content" className="flex min-w-0 flex-col xl:pl-66">{children}</div>
+                {/* The rail is fixed from 1280px up (--rail-w, narrower when collapsed); keep content clear of it. */}
+                <div id="content" className="flex min-w-0 flex-col transition-[padding] duration-150 xl:pl-(--rail-w)">{children}</div>
             </body>
         </html>
     );
