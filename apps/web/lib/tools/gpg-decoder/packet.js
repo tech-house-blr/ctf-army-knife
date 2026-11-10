@@ -469,16 +469,8 @@ export class Packet {
     }
 
     nextColor() {
-        const colors = [
-            "#f39c12",
-            "#16a085",
-            "#d35400",
-            "#8e44ad",
-            "#27ae60",
-            "#2c3e50",
-            "#7f8c8d",
-            "#c0392b",
-        ];
+        // Theme variables (--gpg-1..8 in app/globals.css), so each theme sets readable inks.
+        const colors = Array.from({ length: 8 }, (_, index) => `var(--gpg-${index + 1})`);
 
         this.colorIndex = ((this.colorIndex || 0) + 1) % colors.length;
         return colors[this.colorIndex];

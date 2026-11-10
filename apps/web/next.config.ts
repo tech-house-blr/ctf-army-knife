@@ -3,6 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
     /* config options here */
     reactCompiler: true,
+    // Don't let `next dev` write an AGENTS.md (AI-agent instructions) into the app.
+    agentRules: false,
+    // The dev-only Next.js badge defaults to bottom-left, on top of the rail's controls.
+    devIndicators: { position: "bottom-right" },
     // Keep old camelCase tool URLs working after the switch to kebab-case.
     async redirects() {
         return [

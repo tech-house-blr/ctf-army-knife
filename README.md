@@ -22,19 +22,22 @@ compiles CyberChef; after that it is cached until `vendor/`, `integration/` or
 
 ### Local development
 
-You need Node.js 24 and Python 3.12 or newer.
+You need Node.js 24 and Python 3.12 or newer. No Docker needed.
 
 ```bash
-# Web app (also builds CyberChef the first time)
-npm ci
-npm run dev                      # http://localhost:4000
-
-# API, needed by the cryptogram solver
-cd apps/api
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements-dev.txt
-uvicorn ctf_api.main:app --reload --port 8000
+npm run setup      # once: npm ci, the API virtualenv and its packages, CyberChef
+npm run dev:all    # API on :8000 and web app on http://localhost:4000, in one terminal
 ```
+
+`dev:all` labels each server's output and stops both on Ctrl+C. It reuses the
+existing CyberChef build; run `npm run cyberchef:build` after changing
+`integration/cyberchef/`. AperiSolve's CLI tools (binwalk, zsteg, steghide,
+ExifTool...) are only installed in the API's Docker image, so locally those
+analyzers report "not installed".
+
+To run the servers separately: `npm run dev -w @ctf-army-knife/web` for the web
+app, and `apps/api/.venv/bin/uvicorn ctf_api.main:app --reload --port 8000`
+(from `apps/api`) for the API.
 
 The web app proxies `/api/*` to `API_URL` (default `http://127.0.0.1:8000`),
 so frontend code always calls same-origin paths like `fetch("/api/solve")`.
@@ -54,7 +57,7 @@ apps/
     tests/
 vendor/cyberchef/         pinned upstream CyberChef source (git subtree)
 integration/cyberchef/    our theme, bridge and build patches for CyberChef
-scripts/                  CyberChef build tooling
+scripts/                  CyberChef build tooling; setup, dev:all and test:api helpers
 tests/
   web/                    unit tests for client-side tool logic
   cyberchef/              CyberChef integration tests
@@ -106,7 +109,7 @@ npm run test:unit                 # client-side tool logic
 npm run test:integration          # CyberChef build tooling
 npm run lint
 npm run test:browser              # Playwright; needs `npx playwright install`
-cd apps/api && pytest             # API
+npm run test:api                  # API, in its virtualenv (tool tests skip if a tool isn't installed)
 ```
 
 ## AperiSolve
@@ -133,3 +136,24 @@ upload limit from the API, but uploads above 25 MiB also need the proxy's
 CyberChef is built from a pinned upstream source subtree with a community theme,
 and the Next.js server serves it. See
 [setup, validation, deployment, and updates](docs/cyberchef.md).
+
+## Branding and licences
+
+The interface carries the Tech House BLR logo: the original brand images from
+the Tech House website, trimmed and exported at their display sizes in
+`apps/web/public/brand` (used by `apps/web/components/brand.tsx`), and the mark
+as the favicon (`apps/web/app/icon.png`). The Tech House brand assets are
+CC BY-NC-ND 4.0 and belong to Tech House BLR; they are not covered by this
+repository's code licence, so don't reuse or modify them outside this project
+without permission.
+
+The CTF Army Knife icon is pixel art made with PixelLab (64x64 original in
+`apps/web/public/brand/army-knife-64.png`). It is only ever shown at whole-number
+scales (favicon `apps/web/app/icon.png` at 32 px, 2x/3x/8x copies for the home
+page, Apple touch icon and web manifest) so its pixels stay sharp. The 16 px
+favicon (`apps/web/app/icon1.png`) is hand-placed from it with
+`scripts/army-knife-icon-16.py`, since no generated 16 px version held up.
+
+Fonts in `apps/web/public/fonts` are under the SIL Open Font License (see the
+`OFL-*.txt` files beside them): IBM Plex Sans and Mono for the interface, and
+BBH Hegarty, the Tech House display face, for names and titles.

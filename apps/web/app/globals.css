@@ -1,61 +1,205 @@
 @import "tailwindcss";
 
-:root { --workbench-bg: #111315; --workbench-panel: #181b1e; --workbench-border: #2b2e32; --workbench-amber: #edbd68; }
-.tool-nav { position: fixed; z-index: 40; inset: 0 auto 0 0; width: 64px; display: flex; flex-direction: column; padding: 18px 10px 16px; background: #131618; border-right: 1px solid #2b2e32; color: #8e949b; font-family: Arial, Helvetica, sans-serif; }
-.tool-nav--expanded { width: 276px; box-shadow: 20px 0 80px #0005; }
-.tool-brand { display: flex; align-items: center; gap: 12px; margin: 0 2px 22px; text-decoration: none; }
-.tool-brand-mark { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border: 1px solid #edbd6860; border-radius: 12px; color: #edbd68; background: #edbd6810; }
-.tool-brand-name { color: #f0f0ec; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; white-space: nowrap; }
-.tool-brand-name small { display: block; margin-top: 5px; color: #80878e; font-size: 9px; font-weight: 400; letter-spacing: 1.3px; }
-.tool-nav-toggle { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 40px; padding: 10px 12px; margin-bottom: 20px; border: 0; border-radius: 8px; color: #81878f; background: transparent; cursor: pointer; font-size: 11px; white-space: nowrap; }
-.tool-nav-toggle svg, .tool-nav-link svg { flex-shrink: 0; }
-.tool-nav-toggle:hover, .tool-nav-link:hover { background: #ffffff06; color: #e9e9e5; }
-.tool-nav-links { display: flex; flex-direction: column; gap: 8px; }
-.tool-nav-link { position: relative; display: flex; align-items: center; gap: 14px; min-height: 44px; padding: 12px; color: #848b93; border: 1px solid transparent; border-radius: 9px; text-decoration: none; transition: color .15s, background .15s; font-size: 12px; white-space: nowrap; }
-.tool-nav-link small { margin-left: auto; font: 10px Consolas, monospace; color: #737980; }
-.tool-nav-link.is-active { color: #edbd68; border-color: #edbd6824; background: #edbd680c; }
-.tool-nav-link.is-active::before { content: ""; position: absolute; left: -11px; height: 20px; width: 2px; border-radius: 2px; background: #edbd68; }
-.tool-nav-footer { margin-top: auto; display: flex; align-items: center; gap: 12px; padding: 12px 5px 0; border-top: 1px solid #ffffff0c; font-size: 11px; color: #d1d3d4; }
-.tool-community-mark { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: #262a2e; color: #b8bec4; font: 10px Consolas, monospace; letter-spacing: -1px; }
-.tool-nav-footer small { display: block; color: #747b83; margin-top: 4px; font-size: 10px; }
-.tool-nav-backdrop { position: fixed; inset: 0; z-index: 30; border: 0; background: #0008; backdrop-filter: blur(3px); cursor: pointer; }
-.tool-nav :focus-visible, .chef-shell :focus-visible { outline: 2px solid #edbd68; outline-offset: 3px; }
+/*
+ * Precision instrument with Tech House BLR branding: graphite surfaces in a
+ * few tonal layers, IBM Plex for the interface, BBH Hegarty (the Tech House
+ * display face) for names and titles, soft radii, and one signal colour, a
+ * calmer tone of the logo green #00ff2a, used only for state (current page,
+ * focus, findings). Dark by default; html[data-theme="light"] switches.
+ * The same tokens are mirrored in integration/cyberchef/community.css.
+ */
 
-.chef-shell { height: 100dvh; min-height: 540px; display: flex; flex-direction: column; padding: 0 16px; background: #111315; color: #e7e8e6; font-family: Arial, Helvetica, sans-serif; }
-.chef-header { flex-shrink: 0; }
-.chef-heading-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; padding: 20px 0 18px; }
-.chef-heading { display: flex; align-items: center; gap: 14px; }
-.chef-heading h1 { margin: 0; color: #edbd68; font-size: 23px; line-height: 1.15; font-weight: 600; letter-spacing: -.6px; }
+@font-face { font-family: "BBH Hegarty"; src: url("/fonts/bbh-hegarty.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "IBM Plex Sans"; src: url("/fonts/ibm-plex-sans-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "IBM Plex Sans"; src: url("/fonts/ibm-plex-sans-500.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "IBM Plex Sans"; src: url("/fonts/ibm-plex-sans-600.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "IBM Plex Mono"; src: url("/fonts/ibm-plex-mono-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "IBM Plex Mono"; src: url("/fonts/ibm-plex-mono-500.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "IBM Plex Mono"; src: url("/fonts/ibm-plex-mono-600.woff2") format("woff2"); font-weight: 600; font-display: swap; }
 
-.chef-description { color: #899198; margin: 6px 0 0; font-size: 12px; line-height: 1.6; }
-.chef-actions { display: flex; align-items: center; gap: 9px; }
-.chef-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 37px; padding: 9px 13px; border: 1px solid #34383c; border-radius: 7px; background: #1a1d20; color: #c8cdd1; font: 11px Arial, Helvetica, sans-serif; font-weight: 500; text-decoration: none; cursor: pointer; transition: background .15s, border-color .15s; }
-.chef-button svg { width: 14px; height: 14px; }
-.chef-button:hover { border-color: #727475; background: #22262a; }
-.chef-button--primary { background: #edbd68; color: #242016; border-color: #edbd68; }
-.chef-button--primary:hover { background: #f7cc84; color: #242016; border-color: #f7cc84; }
-.chef-workspace-frame { position: relative; flex: 1; min-height: 0; overflow: hidden; border: 1px solid #32363b; border-radius: 10px; background: #171a1d; box-shadow: 0 8px 32px #0002; }
-.chef-iframe { width: 100%; height: 100%; border: 0; display: block; }
-.chef-loading { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 18px; padding: 30px; background: radial-gradient(ellipse at center, #edbd6806, transparent 60%), #171a1d; text-align: center; }
-.chef-loading-mark { display: grid; place-items: center; width: 64px; height: 64px; border: 1px solid #edbd6835; border-radius: 18px; background: #edbd6808; color: #edbd68; }
-.chef-loading-mark svg { width: 28px; height: 28px; }
-.chef-loading-mark.is-loading { animation: chef-pulse 2s ease-in-out infinite; }
-.chef-loading p { margin: 0; font-size: 12px; color: #b4bbc1; max-width: 380px; line-height: 1.8; }
-.chef-footer { min-height: 39px; display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 10px; color: #747d85; font-size: 9px; }
-.chef-live-status { display: flex; align-items: center; gap: 7px; }
-.chef-live-status i { width: 5px; height: 5px; background: #edbd68; border-radius: 50%; }
-.chef-live-status.is-ready i { background: #91b9a1; box-shadow: 0 0 0 3px #91b9a10b; }
-.chef-copy-status { color: #edbd68; }
-.chef-credit > span { color: #a0a7ad; margin-left: 8px; font-family: Consolas, monospace; }
-@keyframes chef-pulse { 50% { border-color: #edbd6880; box-shadow: 0 0 30px #edbd680a; } }
-@media (max-width: 720px) {
-    .chef-shell { padding: 0 12px; min-height: 600px; }
-    .chef-header { padding-top: 18px; }
-    .chef-breadcrumb { font-size: 8px; letter-spacing: 1px; gap: 8px; }
-    .chef-heading-row { padding: 20px 0 16px; gap: 16px; }
-    .chef-heading h1 { font-size: 23px; }
-    .chef-actions { width: 100%; }
-    .chef-actions .chef-button { flex: 1; }
-    .chef-footer { padding: 8px 0; font-size: 8px; }
+/* Desktop tool rail width: html[data-rail="collapsed"] narrows it to icons.
+   One spring-like curve drives every part of the collapse, so it moves as one. */
+:root { --rail-w: 16.5rem; --rail-dur: 420ms; --ease-liquid: cubic-bezier(0.32, 0.72, 0, 1); }
+:root[data-rail="collapsed"] { --rail-w: 4rem; }
+
+:root {
+    color-scheme: dark;
+    --canvas: #131416;
+    --rail: #0f1012;
+    --panel: #1a1c1f;
+    --raised: #222529;
+    --inset: #101113;
+    --line: #2b2e33;
+    --line-strong: #3a3e44;
+    --fg: #e7e8ea;
+    --fg-2: #a0a4ab;
+    --fg-3: #8a8e96;
+    --signal: #3ddc5b;
+    --signal-soft: rgba(61, 220, 91, 0.1);
+    --on-signal: #06140b;
+    --danger: #ef7d70;
+    --brand-roof: #ffffff; /* logo roof and wordmark tones per theme */
+    --brand-ink: #a6a6a6;
+    --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 1px 2px rgba(0, 0, 0, 0.35);
+    /* GPG decoder field colours */
+    --gpg-1: #e3b768; --gpg-2: #6cc2b0; --gpg-3: #e98f6a; --gpg-4: #82aee8;
+    --gpg-5: #93c77f; --gpg-6: #b9c3cf; --gpg-7: #c9c27a; --gpg-8: #ef8f86;
 }
-@media (prefers-reduced-motion: reduce) { .chef-shell *, .tool-nav * { animation: none !important; transition: none !important; } }
+:root[data-theme="light"] {
+    color-scheme: light;
+    --canvas: #f2f2ef;
+    --rail: #e8e8e4;
+    --panel: #ffffff;
+    --raised: #ecece8;
+    --inset: #f7f7f5;
+    --line: #d2d2cc;
+    --line-strong: #8a8a83;
+    --fg: #0e0f11;
+    --fg-2: #383b40;
+    --fg-3: #4d5056;
+    --signal: #16662a;
+    --signal-soft: rgba(22, 102, 42, 0.09);
+    --on-signal: #ffffff;
+    --danger: #b3261e;
+    --brand-roof: #17181a;
+    --brand-ink: #17181a;
+    --shadow: 0 1px 2px rgba(20, 20, 20, 0.06);
+    --gpg-1: #7a4f00; --gpg-2: #0b6157; --gpg-3: #9c3b0f; --gpg-4: #1f4f8a;
+    --gpg-5: #2d6a2a; --gpg-6: #2c3e50; --gpg-7: #5b5a1c; --gpg-8: #a51c15;
+}
+
+@theme inline {
+    --color-canvas: var(--canvas);
+    --color-rail: var(--rail);
+    --color-panel: var(--panel);
+    --color-raised: var(--raised);
+    --color-inset: var(--inset);
+    --color-line: var(--line);
+    --color-line-strong: var(--line-strong);
+    --color-fg: var(--fg);
+    --color-fg-2: var(--fg-2);
+    --color-fg-3: var(--fg-3);
+    --color-signal: var(--signal);
+    --color-signal-soft: var(--signal-soft);
+    --color-on-signal: var(--on-signal);
+    --color-danger: var(--danger);
+
+    --font-sans: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+    --font-display: "BBH Hegarty", "IBM Plex Sans", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+@layer base {
+    html {
+        background: var(--canvas);
+        color: var(--fg);
+        font-family: var(--font-sans);
+        font-size: 15px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        font-feature-settings: "ss02" 1; /* Plex: single-storey g reads cleaner at UI sizes */
+    }
+    body { background: var(--canvas); }
+    ::selection { background: var(--signal-soft); color: var(--fg); }
+    :focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; border-radius: 6px; }
+    button:not(:disabled), summary, [role="button"]:not(:disabled) { cursor: pointer; }
+    input::placeholder, textarea::placeholder { color: var(--fg-3); }
+}
+
+@layer components {
+    .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: 2.5rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--line-strong);
+        border-radius: 7px;
+        background: var(--raised);
+        color: var(--fg);
+        font-size: 0.9333rem;
+        font-weight: 500;
+        line-height: 1.2;
+        text-decoration: none;
+        transition: background-color 120ms, border-color 120ms, color 120ms;
+    }
+    .btn:hover:not(:disabled) { border-color: var(--fg-3); }
+    .btn:active:not(:disabled) { transform: translateY(0.5px); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn[aria-busy="true"] { cursor: progress; }
+    .btn-primary { background: var(--fg); border-color: var(--fg); color: var(--canvas); }
+    .btn-primary:hover:not(:disabled) { background: var(--signal); border-color: var(--signal); color: var(--on-signal); }
+    .btn-quiet { border-color: transparent; background: transparent; color: var(--fg-2); }
+    .btn-quiet:hover:not(:disabled) { background: var(--raised); color: var(--fg); border-color: transparent; }
+
+    .field-label { display: block; margin-bottom: 0.4rem; font-size: 0.8667rem; font-weight: 500; color: var(--fg-2); }
+    .field {
+        width: 100%;
+        min-height: 2.5rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--line-strong);
+        border-radius: 7px;
+        background: var(--inset);
+        color: var(--fg);
+        font: inherit;
+        transition: border-color 120ms;
+    }
+    .field:hover { border-color: var(--fg-3); }
+    .field:focus-visible { outline-offset: 0; border-color: var(--signal); }
+    textarea.field {
+        padding: 0.75rem 0.875rem;
+        font-family: var(--font-mono);
+        font-size: 0.9333rem;
+        line-height: 1.65;
+        resize: vertical;
+    }
+    select.field {
+        appearance: none;
+        padding-right: 2.25rem;
+        background-image: linear-gradient(45deg, transparent 50%, var(--fg-2) 50%), linear-gradient(135deg, var(--fg-2) 50%, transparent 50%);
+        background-position: calc(100% - 17px) 52%, calc(100% - 12px) 52%;
+        background-size: 5px 5px;
+        background-repeat: no-repeat;
+    }
+    input[type="checkbox"] { accent-color: var(--signal); }
+
+    .error-text { color: var(--danger); font-size: 0.9333rem; }
+
+    /* CyberChef page: the workspace fills the viewport under its header. */
+    .chef-shell { display: flex; flex-direction: column; height: 100dvh; min-height: 560px; }
+    @media (max-width: 1279px) { .chef-shell { height: calc(100dvh - 3.25rem); } }
+    .chef-frame { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+    .chef-iframe { display: block; width: 100%; height: 100%; border: 0; }
+    .chef-progress { width: 10rem; height: 2px; border-radius: 2px; background: var(--line); overflow: hidden; }
+    .chef-progress::after {
+        content: ""; display: block; width: 35%; height: 100%; background: var(--signal);
+        animation: chef-progress 1.4s ease-in-out infinite;
+    }
+    @keyframes chef-progress { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+}
+
+/* Theme switch: the new theme is revealed by a growing circle (lib/theme.ts),
+   so the default cross-fade is turned off and colour transitions are paused. */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+}
+:root[data-theme-switching] * { transition: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
