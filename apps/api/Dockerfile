@@ -3,6 +3,24 @@ FROM python:3.13-slim
 WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
+# External CLI tools used by the stego/forensics features. Keep this list in
+# sync with ctf_api/core/external_tools.py. util-linux provides prlimit,
+# which the sandbox uses for CPU/memory/file-size limits.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        binwalk \
+        binutils \
+        file \
+        foremost \
+        libimage-exiftool-perl \
+        outguess \
+        pngcheck \
+        ruby \
+        steghide \
+        util-linux \
+    && gem install --no-document zsteg \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
