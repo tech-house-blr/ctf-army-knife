@@ -3,7 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { TechHouseMark, TechHouseWordmark } from "@/components/brand";
+import { TechHouseLogo, TechHouseMark } from "@/components/brand";
 import Icon, { type IconName } from "@/components/icons";
 import { LINKS } from "@/lib/links";
 import { readRailCollapsed, setRailCollapsed, subscribeRail } from "@/lib/rail";
@@ -159,15 +159,16 @@ export default function Sidebar() {
     // Fixed pixel renditions (see brand.tsx): never scale these with CSS.
     const logo = (onClick?: () => void, collapsible = false) => (
         <Link href="/" onClick={onClick} className="flex shrink-0 items-end gap-2 rounded-md no-underline" aria-label="Tech House BLR, CTF Army Knife home">
-            <TechHouseMark className="shrink-0" />
-            <TechHouseWordmark className={`max-[359px]:hidden ${collapsible ? whenCollapsed.hide : ""}`} />
+            {/* Full logo where it fits; the mark alone in the collapsed rail and on very narrow screens. */}
+            <TechHouseLogo className={`max-[359px]:hidden ${collapsible ? whenCollapsed.hide : ""}`} />
+            <TechHouseMark className={`min-[360px]:hidden ${collapsible ? "in-data-[rail=collapsed]:xl:inline-flex" : ""}`} />
         </Link>
     );
 
     return (
         <>
             <aside className="fixed inset-y-0 left-0 z-30 hidden w-(--rail-w) flex-col overflow-hidden border-r border-line bg-rail px-3 pt-5 pb-3 transition-[width] duration-150 xl:flex">
-                <div className="flex min-h-7 items-end px-2.5 in-data-[rail=collapsed]:px-[9px]">{logo(undefined, true)}</div>
+                <div className="flex min-h-8 items-center px-0.5 in-data-[rail=collapsed]:xl:px-1.5">{logo(undefined, true)}</div>
                 <div className="mt-7 flex-1 overflow-x-hidden overflow-y-auto">
                     <NavLinks rail />
                 </div>

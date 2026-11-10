@@ -31,6 +31,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 >
                     Skip to content
                 </a>
+                <noscript>
+                    <p className="border-b border-line bg-raised px-4 py-2 text-center text-sm text-fg">
+                        CTF Army Knife needs JavaScript: every tool runs in the page. Turn it on and reload.
+                    </p>
+                </noscript>
                 <Sidebar />
                 {/* The rail is fixed from 1280px up (--rail-w, narrower when collapsed); keep content clear of it. */}
                 <div id="content" className="flex min-w-0 flex-col transition-[padding] duration-150 xl:pl-(--rail-w)">{children}</div>
