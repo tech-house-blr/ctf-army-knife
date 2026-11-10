@@ -45,3 +45,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated CyberChef workspace and isolated dependency/build tree
+/.cache/
+/public/tools/cyberchef/
+/playwright-report/
+/test-results/

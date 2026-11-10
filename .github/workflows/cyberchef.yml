@@ -1,0 +1,50 @@
+name: CyberChef integration
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            vendor/cyberchef/package-lock.json
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .cache/cyberchef
+            public/tools/cyberchef
+          key: ${{ runner.os }}-cyberchef-node24.18.0-v1-${{ hashFiles('vendor/cyberchef/**', 'integration/cyberchef/**', 'scripts/cyberchef*.mjs') }}
+      - run: npm ci
+      - run: npm run test:integration
+      - run: npm run lint
+      - run: npm run cyberchef:setup
+      - name: Upstream lint and operation tests
+        if: runner.os == 'Linux'
+        run: npm run cyberchef:test-upstream
+      - run: npm run build
+      - run: npm run cyberchef:verify
+      - name: Install browser engines
+        if: runner.os == 'Linux'
+        run: npx playwright install --with-deps chromium firefox
+      - name: Browser integration tests
+        if: runner.os == 'Linux'
+        run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: failure() && runner.os == 'Linux'
+        with:
+          name: browser-report
+          path: |
+            playwright-report/
+            test-results/
