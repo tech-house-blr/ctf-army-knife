@@ -12,6 +12,9 @@ import type { NextRequest } from "next/server";
 export const dynamic = "force-dynamic";
 
 const MiB = 1024 * 1024;
+// How long to wait for the API to start responding. Once headers arrive the
+// body streams for as long as it takes: an analysis legitimately streams
+// results for minutes, and cutting it off mid-stream would lose them.
 const TIMEOUT_MS = Number(process.env.API_TIMEOUT_MS ?? 120_000);
 // Slightly above the API's 25 MiB file limit to leave room for multipart framing;
 // the API enforces the exact per-file limit.
@@ -64,14 +67,18 @@ async function forward(request: NextRequest, { params }: RouteContext<"/api/[...
     const accept = request.headers.get("accept");
     if (accept) headers.set("accept", accept);
 
+    const timeout = new AbortController();
+    const timer = setTimeout(() => timeout.abort(new DOMException("API timed out", "TimeoutError")), TIMEOUT_MS);
     try {
         const upstream = await fetch(target, {
             method: request.method,
             headers,
             body: request.method === "GET" ? undefined : await readBody(request),
-            signal: AbortSignal.timeout(TIMEOUT_MS),
+            // The browser going away also cancels the API call, so it can stop its tools.
+            signal: AbortSignal.any([timeout.signal, request.signal]),
             cache: "no-store",
         });
+        clearTimeout(timer);
         const responseHeaders = new Headers();
         for (const name of FORWARDED_RESPONSE_HEADERS) {
             const value = upstream.headers.get(name);
@@ -80,8 +87,9 @@ async function forward(request: NextRequest, { params }: RouteContext<"/api/[...
         if (!responseHeaders.has("content-type")) responseHeaders.set("content-type", "application/json");
         return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
     } catch (error) {
+        clearTimeout(timer);
         if (error instanceof BodyTooLarge) return tooLarge();
-        const timedOut = error instanceof DOMException && error.name === "TimeoutError";
+        const timedOut = timeout.signal.aborted;
         return Response.json(
             { detail: timedOut ? "The API took too long to respond." : "The API is unreachable. Is apps/api running?" },
             { status: timedOut ? 504 : 502 },

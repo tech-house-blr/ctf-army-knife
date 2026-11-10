@@ -1,6 +1,10 @@
 /** Client for the AperiSolve API (apps/api/ctf_api/tools/aperisolve/router.py). */
 
-export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+/** Used until /api/aperisolve/config answers; matches the API's default. */
+export const DEFAULT_MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
+export const INCOMPLETE_ANALYSIS =
+    "The analysis stopped before every tool finished (the connection was lost or timed out). Try again.";
 
 export type AnalyzerResult = {
     status: "ok" | "error" | "unavailable";
@@ -66,6 +70,27 @@ export async function errorMessage(response: Response): Promise<string> {
     return `The analysis failed (HTTP ${response.status}).`;
 }
 
+/** Pass events through, and fail if the stream ends without its final "done" event. */
+export async function* untilDone(events: AsyncIterable<AnalysisEvent>): AsyncGenerator<AnalysisEvent> {
+    for await (const event of events) {
+        yield event;
+        if (event.event === "done") return;
+    }
+    throw new Error(INCOMPLETE_ANALYSIS);
+}
+
+/** The API's upload limit, or null if it can't be fetched. */
+export async function fetchUploadLimit(signal?: AbortSignal): Promise<number | null> {
+    try {
+        const response = await fetch("/api/aperisolve/config", { signal });
+        if (!response.ok) return null;
+        const { max_upload_bytes: limit } = await response.json();
+        return Number.isFinite(limit) && limit > 0 ? limit : null;
+    } catch {
+        return null;
+    }
+}
+
 export async function* analyze(
     file: File,
     options: { password: string; deep: boolean; signal?: AbortSignal },
@@ -76,11 +101,5 @@ export async function* analyze(
     form.append("deep", String(options.deep));
     const response = await fetch("/api/aperisolve/analyze", { method: "POST", body: form, signal: options.signal });
     if (!response.ok || !response.body) throw new Error(await errorMessage(response));
-    yield* readEvents(response.body);
-}
-
-export function formatBytes(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KiB`;
-    return `${(bytes / 1024 / 1024).toFixed(1)} MiB`;
+    yield* untilDone(readEvents(response.body));
 }
