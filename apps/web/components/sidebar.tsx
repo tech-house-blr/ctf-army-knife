@@ -1,17 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { applyTheme, readTheme, subscribeTheme, type Theme } from "@/lib/theme";
 import { toolHref, toolsByCategory } from "@/lib/tools/registry";
 
-function Wordmark({ compact = false, onNavigate }: { compact?: boolean; onNavigate?: () => void }) {
+function ThemeToggle() {
+    const theme = useSyncExternalStore(subscribeTheme, readTheme, (): Theme => "dark");
+    const next: Theme = theme === "dark" ? "light" : "dark";
     return (
-        <Link href="/" onClick={onNavigate} className="group block text-ink no-underline" aria-label="CTF Army Knife home">
-            <span className={`display block ${compact ? "text-[1.375rem]" : "text-[2rem]"}`}>
-                Army{compact ? " " : <br />}Knife
-            </span>
-        </Link>
+        <button
+            type="button"
+            onClick={() => applyTheme(next)}
+            aria-label={`Switch to ${next} theme`}
+            title={`Switch to ${next} theme`}
+            className="btn btn-quiet size-9 min-h-9 p-0"
+        >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle cx="8" cy="8" r="6.25" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M8 1.75a6.25 6.25 0 0 1 0 12.5z" fill="currentColor" />
+            </svg>
+        </button>
     );
 }
 
@@ -24,23 +34,23 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
                 href={href}
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-11 items-center gap-3 py-2 text-[0.9375rem] no-underline decoration-2 underline-offset-4 hover:underline ${
-                    active ? "font-bold text-ink" : "text-ink"
+                className={`relative flex min-h-9 items-center rounded-md px-3 text-[0.9333rem] no-underline transition-colors duration-100 ${
+                    active ? "bg-raised font-medium text-fg" : "text-fg-2 hover:bg-raised/60 hover:text-fg"
                 }`}
             >
-                <span aria-hidden="true" className={`size-2 shrink-0 ${active ? "bg-red" : "bg-transparent"}`} />
+                {active && <span aria-hidden="true" className="absolute top-2.5 bottom-2.5 left-0 w-0.5 rounded-full bg-signal" />}
                 {label}
             </Link>
         );
     };
 
     return (
-        <nav aria-label="Tools" className="flex flex-col gap-6">
+        <nav aria-label="Tools" className="flex flex-col gap-5">
             <div>{link("/", "All tools")}</div>
             {toolsByCategory().map((group) => (
-                <div key={group.id}>
-                    <h2 className="border-b border-ink pb-1 text-[0.8125rem] font-semibold text-ink-2">{group.label}</h2>
-                    <ul>
+                <div key={group.id} role="group" aria-labelledby={`nav-${group.id}`}>
+                    <p id={`nav-${group.id}`} className="mb-1 px-3 text-xs font-medium text-fg-3">{group.label}</p>
+                    <ul className="flex flex-col gap-0.5">
                         {group.tools.map((tool) => (
                             <li key={tool.slug}>{link(toolHref(tool), tool.name)}</li>
                         ))}
@@ -67,31 +77,42 @@ export default function Sidebar() {
         };
     }, [open]);
 
+    const wordmark = (onClick?: () => void) => (
+        <Link href="/" onClick={onClick} className="text-[0.9333rem] font-semibold tracking-tight text-fg no-underline" aria-label="CTF Army Knife home">
+            Army Knife
+        </Link>
+    );
+
     return (
         <>
-            <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r-2 border-ink bg-paper px-6 pt-7 pb-6 xl:flex">
-                <Wordmark />
-                <p className="mt-3 border-b-[3px] border-ink pb-5 text-sm text-ink-2">CTF toolkit by Tech House BLR</p>
-                <div className="mt-6 flex-1 overflow-y-auto">
+            <aside className="fixed inset-y-0 left-0 z-30 hidden w-58 flex-col border-r border-line bg-rail px-4 pt-5 pb-4 xl:flex">
+                <div className="px-3">{wordmark()}</div>
+                <div className="mt-7 flex-1 overflow-y-auto pl-0">
                     <NavLinks />
+                </div>
+                <div className="flex justify-end">
+                    <ThemeToggle />
                 </div>
             </aside>
 
-            <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b-2 border-ink bg-paper px-4 sm:px-6 xl:hidden">
-                <Wordmark compact onNavigate={() => setOpen(false)} />
-                <button
-                    type="button"
-                    onClick={() => setOpen(!open)}
-                    aria-expanded={open}
-                    aria-controls="mobile-nav"
-                    aria-label={open ? "Close navigation" : "Open navigation"}
-                    className="btn btn-secondary min-h-10 px-4 py-1.5"
-                >
-                    {open ? "Close" : "Tools"}
-                </button>
+            <header className="sticky top-0 z-30 flex h-13 items-center justify-between gap-3 border-b border-line bg-rail/95 px-4 backdrop-blur sm:px-6 xl:hidden">
+                {wordmark(() => setOpen(false))}
+                <div className="flex items-center gap-1">
+                    <ThemeToggle />
+                    <button
+                        type="button"
+                        onClick={() => setOpen(!open)}
+                        aria-expanded={open}
+                        aria-controls="mobile-nav"
+                        aria-label={open ? "Close navigation" : "Open navigation"}
+                        className="btn btn-quiet min-h-9 px-3"
+                    >
+                        {open ? "Close" : "Tools"}
+                    </button>
+                </div>
             </header>
             {open && (
-                <div id="mobile-nav" className="fixed inset-x-0 top-14 bottom-0 z-30 overflow-y-auto bg-paper px-4 pt-6 pb-10 sm:px-6 xl:hidden">
+                <div id="mobile-nav" className="fixed inset-x-0 top-13 bottom-0 z-30 overflow-y-auto bg-rail px-4 pt-5 pb-10 sm:px-6 xl:hidden">
                     <NavLinks onNavigate={() => setOpen(false)} />
                 </div>
             )}

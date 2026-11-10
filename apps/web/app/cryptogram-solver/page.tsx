@@ -30,9 +30,9 @@ export default function CryptogramSolverPage() {
     const [copied, setCopied] = useState("");
     const [error, setError] = useState("");
 
-    async function copy(text: string, what: string) {
+    async function copy(text: string, id: string) {
         await navigator.clipboard.writeText(text);
-        setCopied(what);
+        setCopied(id);
         setTimeout(() => setCopied(""), 1500);
     }
 
@@ -49,7 +49,7 @@ export default function CryptogramSolverPage() {
             const plain = mapping.plain.trim().toUpperCase();
             if (!cipher && !plain) continue;
             if (!/^[A-Z]$/.test(cipher) || !/^[A-Z]$/.test(plain)) {
-                setError("Each known mapping needs one letter on each side.");
+                setError("Each known letter needs one letter on each side.");
                 return;
             }
             constraints[cipher] = plain;
@@ -83,22 +83,21 @@ export default function CryptogramSolverPage() {
         <ToolPage>
             <PageHeader slug="cryptogram-solver" />
 
-            <form onSubmit={solve} className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
-                <div>
+            <form onSubmit={solve} className="panel mt-5 grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_17rem]">
+                <div className="flex flex-col">
                     <label htmlFor="ciphertext" className="field-label">Ciphertext</label>
                     <textarea
                         id="ciphertext"
                         value={ciphertext}
                         onChange={(event) => setCiphertext(event.target.value)}
-                        rows={9}
+                        rows={8}
                         spellCheck={false}
-                        placeholder="Paste a substitution cipher"
                         required
-                        className="field text-lg uppercase"
+                        className="field flex-1 text-base uppercase"
                     />
                 </div>
 
-                <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-4">
                     <div>
                         <label htmlFor="mode" className="field-label">Mode</label>
                         <select id="mode" value={mode} onChange={(event) => setMode(event.target.value)} className="field">
@@ -107,7 +106,7 @@ export default function CryptogramSolverPage() {
                             <option value="dictionary">Dictionary</option>
                         </select>
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-2">
                         {settingFields.map((field) => (
                             <div key={field.id}>
                                 <label htmlFor={field.id} className="field-label">{field.label}</label>
@@ -118,105 +117,92 @@ export default function CryptogramSolverPage() {
                                     max={field.max}
                                     value={settings[field.id]}
                                     onChange={(event) => setSettings({ ...settings, [field.id]: Number(event.target.value) })}
-                                    className="field font-mono"
+                                    className="field px-2 font-mono tabular-nums"
                                 />
                             </div>
                         ))}
                     </div>
 
                     <fieldset>
-                        <legend className="field-label">
-                            Known mappings <span className="field-hint">(optional)</span>
-                        </legend>
+                        <legend className="field-label">Known letters</legend>
                         {mappings.length > 0 && (
-                            <ul className="mb-3 flex flex-col gap-2">
+                            <ul className="mb-2 flex flex-col gap-1.5">
                                 {mappings.map((mapping, index) => (
                                     <li key={index} className="flex items-center gap-2">
                                         <input
                                             aria-label={`Cipher letter ${index + 1}`}
                                             maxLength={1}
-                                            placeholder="G"
                                             value={mapping.cipher}
                                             onChange={(event) => updateMapping(index, "cipher", event.target.value)}
-                                            className="field w-12 px-0 text-center font-mono uppercase"
+                                            className="field w-11 px-0 text-center font-mono uppercase"
                                         />
-                                        <span className="text-sm text-ink-2">is</span>
+                                        <span aria-hidden="true" className="text-fg-3">=</span>
                                         <input
                                             aria-label={`Plaintext letter ${index + 1}`}
                                             maxLength={1}
-                                            placeholder="T"
                                             value={mapping.plain}
                                             onChange={(event) => updateMapping(index, "plain", event.target.value)}
-                                            className="field w-12 px-0 text-center font-mono uppercase"
+                                            className="field w-11 px-0 text-center font-mono uppercase"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setMappings(mappings.filter((_, i) => i !== index))}
-                                            className="ml-auto min-h-11 px-2 text-sm font-semibold underline decoration-2 underline-offset-4 hover:text-red-ink"
+                                            aria-label={`Remove known letter ${index + 1}`}
+                                            className="btn btn-quiet ml-auto size-9 min-h-9 p-0"
                                         >
-                                            Remove
+                                            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 2.5l7 7m0-7l-7 7" stroke="currentColor" strokeWidth="1.5" /></svg>
                                         </button>
                                     </li>
                                 ))}
                             </ul>
                         )}
-                        <button
-                            type="button"
-                            onClick={() => setMappings([...mappings, { cipher: "", plain: "" }])}
-                            className="btn btn-secondary w-full"
-                        >
-                            Add a known letter
+                        <button type="button" onClick={() => setMappings([...mappings, { cipher: "", plain: "" }])} className="btn w-full">
+                            Add letter
                         </button>
                     </fieldset>
 
-                    {error && <p role="alert" className="alert text-sm">{error}</p>}
-                    <button type="submit" disabled={solving} className="btn btn-primary w-full">
-                        {solving ? "Solving…" : "Solve cipher"}
+                    <button type="submit" disabled={solving} aria-busy={solving} className="btn btn-primary mt-auto w-full">
+                        {solving ? "Solving…" : "Solve"}
                     </button>
+                    {error && <p role="alert" className="error-text">{error}</p>}
                 </div>
             </form>
 
-            <section className="mt-14" aria-labelledby="candidates-heading" aria-live="polite">
-                <div className="flex items-baseline justify-between gap-6 border-b-[3px] border-ink pb-3">
-                    <h2 id="candidates-heading" className="text-2xl font-extrabold">Candidates</h2>
-                    <p className="text-sm text-ink-2">
-                        {solving ? "Solving…" : solutions.length ? `${solutions.length} found, best first` : ""}
-                        {copied && <span className="ml-3 font-semibold text-ink">{copied} copied</span>}
-                    </p>
-                </div>
-                {solutions.length === 0 ? (
-                    <p className="py-6 text-ink-2">Solve a cipher to see the most likely plaintexts here.</p>
-                ) : (
+            {solutions.length > 0 && (
+                <section className="panel mt-5 overflow-hidden" aria-labelledby="candidates-heading" aria-live="polite">
+                    <header className="flex items-center justify-between gap-6 border-b border-line px-5 py-3">
+                        <h2 id="candidates-heading" className="font-semibold">Candidates</h2>
+                        <span className="text-sm text-fg-3 tabular-nums">{solutions.length}</span>
+                    </header>
                     <ol>
                         {solutions.map((solution, index) => {
                             const key = Object.entries(solution.key)
                                 .map(([cipher, plain]) => `${cipher}=${plain}`)
                                 .join(" ");
+                            const best = index === 0;
                             return (
                                 <li
                                     key={`${solution.plaintext}-${index}`}
-                                    className="grid gap-x-8 gap-y-3 border-b border-ink py-5 md:grid-cols-[6rem_minmax(0,1fr)_auto]"
+                                    aria-label={best ? `Candidate 1, highest score` : `Candidate ${index + 1}`}
+                                    className={`grid items-baseline gap-x-5 gap-y-1 border-b border-line px-5 py-3 last:border-b-0 sm:grid-cols-[2rem_minmax(0,1fr)_5rem_auto] ${best ? "bg-signal-soft" : ""}`}
                                 >
-                                    <div className="flex items-baseline gap-3 md:flex-col md:gap-1">
-                                        <span className="text-2xl font-extrabold leading-none">{index + 1}</span>
-                                        {index === 0 && <span className="text-sm font-semibold text-red-ink">Best match</span>}
-                                        <span className="font-mono text-sm text-ink-2">{solution.score.toFixed(3)}</span>
-                                    </div>
-                                    <pre className="font-mono text-base leading-relaxed whitespace-pre-wrap wrap-break-word">{solution.plaintext}</pre>
-                                    <div className="flex gap-5 md:justify-end">
-                                        <button type="button" onClick={() => void copy(solution.plaintext, "Plaintext")} className="min-h-10 text-sm font-semibold underline decoration-2 underline-offset-4 hover:text-red-ink">
-                                            Copy plaintext
+                                    <span className={`text-sm tabular-nums ${best ? "font-semibold text-signal" : "text-fg-3"}`}>{index + 1}</span>
+                                    <pre className={`font-mono text-[0.9333rem] leading-relaxed wrap-break-word whitespace-pre-wrap ${best ? "text-fg" : "text-fg-2"}`}>{solution.plaintext}</pre>
+                                    <span className="text-sm text-fg-3 tabular-nums sm:text-right">{solution.score.toFixed(2)}</span>
+                                    <span className="flex gap-1 sm:justify-end">
+                                        <button type="button" onClick={() => void copy(solution.plaintext, `p${index}`)} className="btn btn-quiet min-h-8 px-2.5 py-1 text-sm">
+                                            {copied === `p${index}` ? "Copied" : "Copy text"}
                                         </button>
-                                        <button type="button" onClick={() => void copy(key, "Key")} className="min-h-10 text-sm font-semibold underline decoration-2 underline-offset-4 hover:text-red-ink">
-                                            Copy key
+                                        <button type="button" onClick={() => void copy(key, `k${index}`)} className="btn btn-quiet min-h-8 px-2.5 py-1 text-sm">
+                                            {copied === `k${index}` ? "Copied" : "Copy key"}
                                         </button>
-                                    </div>
+                                    </span>
                                 </li>
                             );
                         })}
                     </ol>
-                )}
-            </section>
+                </section>
+            )}
         </ToolPage>
     );
 }

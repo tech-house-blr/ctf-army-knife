@@ -2,6 +2,18 @@
 (() => {
     "use strict";
 
+    // Follow the host app's light/dark choice (apps/web/lib/theme.ts). The
+    // iframe is same-origin, so it shares localStorage and its storage events.
+    const themeKey = "ctf-army-knife:theme";
+    function applyTheme(value) {
+        if (value === "light") document.documentElement.setAttribute("data-ctf-theme", "light");
+        else document.documentElement.removeAttribute("data-ctf-theme");
+    }
+    try { applyTheme(window.localStorage.getItem(themeKey)); } catch { /* storage blocked */ }
+    window.addEventListener("storage", (event) => {
+        if (event.key === themeKey) applyTheme(event.newValue);
+    });
+
     const channel = "ctf-army-knife:cyberchef:v1";
     const embedded = window.parent !== window;
     let ready = false;
@@ -100,7 +112,7 @@
         };
         const notice = document.getElementById("notice");
         if (notice) {
-            notice.textContent = "CTF Army Knife · CyberChef (community build)";
+            notice.textContent = "CyberChef community build";
             notice.removeAttribute("data-help");
         }
         lastHash = window.location.hash;

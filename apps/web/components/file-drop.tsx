@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import { formatBytes } from "@/lib/format";
 
@@ -10,19 +10,21 @@ type FileDropProps = {
     accept?: string;
     maxBytes?: number;
     disabled?: boolean;
-    hint?: string;
 };
 
 /** Reusable file picker: click, drag and drop, or paste (Ctrl+V) an image. */
-export default function FileDrop({ file, onFile, accept, maxBytes, disabled, hint }: FileDropProps) {
+export default function FileDrop({ file, onFile, accept, maxBytes, disabled }: FileDropProps) {
     const input = useRef<HTMLInputElement>(null);
     const [dragging, setDragging] = useState(false);
     const [error, setError] = useState("");
+    const preview = useMemo(() => (file?.type.startsWith("image/") ? URL.createObjectURL(file) : null), [file]);
+    const [brokenPreview, setBrokenPreview] = useState<string | null>(null);
+    useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 
     function choose(candidate: File | undefined) {
         if (!candidate || disabled) return;
         if (maxBytes && candidate.size > maxBytes) {
-            setError(`${candidate.name} is ${formatBytes(candidate.size)}; the limit is ${formatBytes(maxBytes)}.`);
+            setError(`${candidate.name} is ${formatBytes(candidate.size)}. The limit is ${formatBytes(maxBytes)}.`);
             return;
         }
         setError("");
@@ -45,8 +47,10 @@ export default function FileDrop({ file, onFile, accept, maxBytes, disabled, hin
         choose(event.dataTransfer.files[0]);
     }
 
+    const showPreview = preview && brokenPreview !== preview;
+
     return (
-        <div className="w-full">
+        <div className="flex h-full flex-col">
             <button
                 type="button"
                 disabled={disabled}
@@ -57,20 +61,31 @@ export default function FileDrop({ file, onFile, accept, maxBytes, disabled, hin
                 }}
                 onDragLeave={() => setDragging(false)}
                 onDrop={onDrop}
-                className={`flex min-h-40 w-full flex-col items-start justify-center gap-1 border-2 border-dashed px-6 py-8 text-left transition-colors duration-100 disabled:cursor-wait disabled:opacity-60 ${
-                    dragging ? "border-red bg-sheet" : "border-ink bg-sheet/60 hover:bg-sheet"
+                aria-label={file ? `Chosen file: ${file.name}. Choose another file` : "Choose a file"}
+                className={`flex min-h-36 w-full flex-1 items-center gap-4 rounded-lg border border-dashed p-5 text-left transition-colors duration-100 disabled:cursor-progress disabled:opacity-60 ${
+                    dragging ? "border-signal bg-signal-soft" : "border-line-strong bg-inset hover:border-fg-3"
                 }`}
             >
                 {file ? (
                     <>
-                        <span className="font-mono text-lg font-medium break-all">{file.name}</span>
-                        <span className="text-sm text-ink-2">{formatBytes(file.size)}. Click or drop another file to replace it.</span>
+                        {showPreview && (
+                            // eslint-disable-next-line @next/next/no-img-element -- local object URL preview
+                            <img
+                                src={preview}
+                                alt=""
+                                onError={() => setBrokenPreview(preview)}
+                                className="size-20 shrink-0 rounded-md border border-line bg-panel object-contain [image-rendering:pixelated]"
+                            />
+                        )}
+                        <span className="min-w-0">
+                            <span className="block font-mono text-[0.9333rem] break-all text-fg">{file.name}</span>
+                            <span className="mt-0.5 block text-sm text-fg-3 tabular-nums">{formatBytes(file.size)}</span>
+                        </span>
                     </>
                 ) : (
-                    <>
-                        <span className="text-xl font-bold">Drop a file here, click to choose, or paste</span>
-                        {hint && <span className="text-sm text-ink-2">{hint}</span>}
-                    </>
+                    <span className="w-full text-center text-fg-2">
+                        Drop, paste or choose a file{maxBytes ? ` up to ${formatBytes(maxBytes)}` : ""}
+                    </span>
                 )}
             </button>
             <input
@@ -83,11 +98,7 @@ export default function FileDrop({ file, onFile, accept, maxBytes, disabled, hin
                     event.target.value = "";
                 }}
             />
-            {error && (
-                <p role="alert" className="alert mt-3 text-sm">
-                    {error}
-                </p>
-            )}
+            {error && <p role="alert" className="error-text mt-2">{error}</p>}
         </div>
     );
 }

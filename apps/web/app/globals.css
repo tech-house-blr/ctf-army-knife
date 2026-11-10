@@ -1,96 +1,105 @@
 @import "tailwindcss";
 
 /*
- * Field manual: grey engineering paper, carbon ink, hazard red.
- * Red is reserved for the current page, focus, errors and findings.
+ * Precision instrument: graphite surfaces in a few tonal layers, IBM Plex,
+ * soft radii, and one signal colour used only for state (current page,
+ * focus, findings). Dark by default; html[data-theme="light"] switches.
  * The same tokens are mirrored in integration/cyberchef/community.css.
  */
 
-@font-face {
-    font-family: "Archivo";
-    src: url("/fonts/archivo-variable.woff2") format("woff2-variations");
-    font-weight: 100 900;
-    font-stretch: 62% 125%;
-    font-style: normal;
-    font-display: swap;
+@font-face { font-family: "IBM Plex Sans"; src: url("/fonts/ibm-plex-sans-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "IBM Plex Sans"; src: url("/fonts/ibm-plex-sans-500.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "IBM Plex Sans"; src: url("/fonts/ibm-plex-sans-600.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "IBM Plex Mono"; src: url("/fonts/ibm-plex-mono-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "IBM Plex Mono"; src: url("/fonts/ibm-plex-mono-500.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "IBM Plex Mono"; src: url("/fonts/ibm-plex-mono-600.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+
+:root {
+    color-scheme: dark;
+    --canvas: #131416;
+    --rail: #0f1012;
+    --panel: #1a1c1f;
+    --raised: #222529;
+    --inset: #101113;
+    --line: #2b2e33;
+    --line-strong: #3a3e44;
+    --fg: #e7e8ea;
+    --fg-2: #a0a4ab;
+    --fg-3: #8a8e96;
+    --signal: #e3a84e;
+    --signal-soft: rgba(227, 168, 78, 0.12);
+    --on-signal: #1a1408;
+    --danger: #ef7d70;
+    --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 1px 2px rgba(0, 0, 0, 0.35);
+    /* GPG decoder field colours */
+    --gpg-1: #e3b768; --gpg-2: #6cc2b0; --gpg-3: #e98f6a; --gpg-4: #82aee8;
+    --gpg-5: #93c77f; --gpg-6: #b9c3cf; --gpg-7: #c9c27a; --gpg-8: #ef8f86;
 }
-@font-face {
-    font-family: "IBM Plex Mono";
-    src: url("/fonts/ibm-plex-mono-400.woff2") format("woff2");
-    font-weight: 400;
-    font-display: swap;
-}
-@font-face {
-    font-family: "IBM Plex Mono";
-    src: url("/fonts/ibm-plex-mono-500.woff2") format("woff2");
-    font-weight: 500;
-    font-display: swap;
-}
-@font-face {
-    font-family: "IBM Plex Mono";
-    src: url("/fonts/ibm-plex-mono-600.woff2") format("woff2");
-    font-weight: 600;
-    font-display: swap;
+:root[data-theme="light"] {
+    color-scheme: light;
+    --canvas: #f3f3f1;
+    --rail: #ebebe8;
+    --panel: #ffffff;
+    --raised: #f0f0ed;
+    --inset: #f7f7f5;
+    --line: #dededa;
+    --line-strong: #c9c9c4;
+    --fg: #17181a;
+    --fg-2: #55585e;
+    --fg-3: #6b6e75;
+    --signal: #9a6410;
+    --signal-soft: rgba(154, 100, 16, 0.1);
+    --on-signal: #ffffff;
+    --danger: #b3261e;
+    --shadow: 0 1px 2px rgba(20, 20, 20, 0.06);
+    --gpg-1: #7a4f00; --gpg-2: #0b6157; --gpg-3: #9c3b0f; --gpg-4: #1f4f8a;
+    --gpg-5: #2d6a2a; --gpg-6: #2c3e50; --gpg-7: #5b5a1c; --gpg-8: #a51c15;
 }
 
-@theme {
-    --color-paper: #edede7;
-    --color-sheet: #f8f8f4;
-    --color-well: #e2e2db;
-    --color-ink: #161616;
-    --color-ink-2: #55554f;
-    --color-hair: #bdbdb4;
-    --color-red: #c8231b;
-    --color-red-ink: #a51c15;
+@theme inline {
+    --color-canvas: var(--canvas);
+    --color-rail: var(--rail);
+    --color-panel: var(--panel);
+    --color-raised: var(--raised);
+    --color-inset: var(--inset);
+    --color-line: var(--line);
+    --color-line-strong: var(--line-strong);
+    --color-fg: var(--fg);
+    --color-fg-2: var(--fg-2);
+    --color-fg-3: var(--fg-3);
+    --color-signal: var(--signal);
+    --color-signal-soft: var(--signal-soft);
+    --color-on-signal: var(--on-signal);
+    --color-danger: var(--danger);
 
-    --font-sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --font-sans: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
     --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 
 @layer base {
     html {
-        color-scheme: light;
-        background: var(--color-paper);
-        color: var(--color-ink);
+        background: var(--canvas);
+        color: var(--fg);
         font-family: var(--font-sans);
-        font-size: 16px;
+        font-size: 15px;
         line-height: 1.55;
         -webkit-font-smoothing: antialiased;
         text-rendering: optimizeLegibility;
+        font-feature-settings: "ss02" 1; /* Plex: single-storey g reads cleaner at UI sizes */
     }
-    body {
-        background: var(--color-paper);
-    }
-    ::selection {
-        background: var(--color-ink);
-        color: var(--color-paper);
-    }
-    :focus-visible {
-        outline: 2px solid var(--color-red);
-        outline-offset: 2px;
-    }
-    button:not(:disabled),
-    [role="button"]:not(:disabled),
-    summary {
-        cursor: pointer;
-    }
-    input::placeholder,
-    textarea::placeholder {
-        color: var(--color-ink-2);
-        opacity: 0.75;
-    }
+    body { background: var(--canvas); }
+    ::selection { background: var(--signal-soft); color: var(--fg); }
+    :focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; border-radius: 6px; }
+    button:not(:disabled), summary, [role="button"]:not(:disabled) { cursor: pointer; }
+    input::placeholder, textarea::placeholder { color: var(--fg-3); }
 }
 
 @layer components {
-    /* The big type: a tool's name set as structure, not decoration. */
-    .display {
-        font-weight: 850;
-        font-stretch: 112%;
-        text-transform: uppercase;
-        letter-spacing: -0.035em;
-        word-spacing: 0.1em;
-        line-height: 0.88;
-        overflow-wrap: anywhere;
+    .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        box-shadow: var(--shadow);
     }
 
     .btn {
@@ -98,130 +107,71 @@
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
-        min-height: 2.75rem;
-        padding: 0.625rem 1.25rem;
-        border: 2px solid var(--color-ink);
-        font-weight: 650;
-        font-size: 0.9375rem;
+        min-height: 2.5rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--line-strong);
+        border-radius: 7px;
+        background: var(--raised);
+        color: var(--fg);
+        font-size: 0.9333rem;
+        font-weight: 500;
         line-height: 1.2;
         text-decoration: none;
-        transition: background-color 120ms, color 120ms, border-color 120ms;
+        transition: background-color 120ms, border-color 120ms, color 120ms;
     }
-    .btn:active:not(:disabled) {
-        transform: translateY(1px);
-    }
-    .btn:disabled {
-        opacity: 0.55;
-        cursor: wait;
-    }
-    .btn-primary {
-        background: var(--color-ink);
-        color: var(--color-paper);
-    }
-    .btn-primary:hover:not(:disabled) {
-        background: var(--color-red);
-        border-color: var(--color-red);
-    }
-    .btn-secondary {
-        background: transparent;
-        color: var(--color-ink);
-    }
-    .btn-secondary:hover:not(:disabled) {
-        background: var(--color-ink);
-        color: var(--color-paper);
-    }
+    .btn:hover:not(:disabled) { border-color: var(--fg-3); }
+    .btn:active:not(:disabled) { transform: translateY(0.5px); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn[aria-busy="true"] { cursor: progress; }
+    .btn-primary { background: var(--fg); border-color: var(--fg); color: var(--canvas); }
+    .btn-primary:hover:not(:disabled) { background: var(--signal); border-color: var(--signal); color: var(--on-signal); }
+    .btn-quiet { border-color: transparent; background: transparent; color: var(--fg-2); }
+    .btn-quiet:hover:not(:disabled) { background: var(--raised); color: var(--fg); border-color: transparent; }
 
-    .field-label {
-        display: block;
-        margin-bottom: 0.375rem;
-        font-size: 0.875rem;
-        font-weight: 650;
-    }
-    .field-hint {
-        font-weight: 400;
-        color: var(--color-ink-2);
-    }
+    .field-label { display: block; margin-bottom: 0.4rem; font-size: 0.8667rem; font-weight: 500; color: var(--fg-2); }
     .field {
         width: 100%;
-        min-height: 2.75rem;
+        min-height: 2.5rem;
         padding: 0.5rem 0.75rem;
-        border: 2px solid var(--color-ink);
-        border-radius: 0;
-        background: var(--color-sheet);
-        color: var(--color-ink);
+        border: 1px solid var(--line-strong);
+        border-radius: 7px;
+        background: var(--inset);
+        color: var(--fg);
         font: inherit;
+        transition: border-color 120ms;
     }
-    .field:focus-visible {
-        outline-offset: 0;
-    }
+    .field:hover { border-color: var(--fg-3); }
+    .field:focus-visible { outline-offset: 0; border-color: var(--signal); }
     textarea.field {
-        padding: 0.875rem 1rem;
+        padding: 0.75rem 0.875rem;
         font-family: var(--font-mono);
-        font-size: 0.9375rem;
-        line-height: 1.6;
+        font-size: 0.9333rem;
+        line-height: 1.65;
         resize: vertical;
     }
     select.field {
         appearance: none;
         padding-right: 2.25rem;
-        background-image: linear-gradient(45deg, transparent 50%, var(--color-ink) 50%),
-            linear-gradient(135deg, var(--color-ink) 50%, transparent 50%);
-        background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
-        background-size: 6px 6px;
+        background-image: linear-gradient(45deg, transparent 50%, var(--fg-2) 50%), linear-gradient(135deg, var(--fg-2) 50%, transparent 50%);
+        background-position: calc(100% - 17px) 52%, calc(100% - 12px) 52%;
+        background-size: 5px 5px;
         background-repeat: no-repeat;
     }
+    input[type="checkbox"] { accent-color: var(--signal); }
 
-    .alert {
-        border-left: 4px solid var(--color-red);
-        padding: 0.5rem 0 0.5rem 0.875rem;
-        color: var(--color-red-ink);
-        font-weight: 550;
-    }
+    .error-text { color: var(--danger); font-size: 0.9333rem; }
 
-    /* CyberChef page: the workspace frame fills the viewport under its header. */
-    .chef-shell {
-        display: flex;
-        flex-direction: column;
-        height: 100dvh;
-        min-height: 560px;
-    }
-    @media (max-width: 1279px) {
-        .chef-shell {
-            height: calc(100dvh - 3.5rem);
-        }
-    }
-    .chef-frame {
-        position: relative;
-        flex: 1;
-        min-height: 0;
-        border-top: 3px solid var(--color-ink);
-        border-bottom: 2px solid var(--color-ink);
-        background: var(--color-sheet);
-    }
-    .chef-iframe {
-        display: block;
-        width: 100%;
-        height: 100%;
-        border: 0;
-    }
-    .chef-loading-bar {
-        width: 12rem;
-        height: 4px;
-        background: var(--color-hair);
-        overflow: hidden;
-    }
-    .chef-loading-bar::after {
-        content: "";
-        display: block;
-        width: 35%;
-        height: 100%;
-        background: var(--color-ink);
+    /* CyberChef page: the workspace fills the viewport under its header. */
+    .chef-shell { display: flex; flex-direction: column; height: 100dvh; min-height: 560px; }
+    @media (max-width: 1279px) { .chef-shell { height: calc(100dvh - 3.25rem); } }
+    .chef-frame { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+    .chef-iframe { display: block; width: 100%; height: 100%; border: 0; }
+    .chef-progress { width: 10rem; height: 2px; border-radius: 2px; background: var(--line); overflow: hidden; }
+    .chef-progress::after {
+        content: ""; display: block; width: 35%; height: 100%; background: var(--signal);
         animation: chef-progress 1.4s ease-in-out infinite;
     }
-    @keyframes chef-progress {
-        from { transform: translateX(-100%); }
-        to { transform: translateX(300%); }
-    }
+    @keyframes chef-progress { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
 }
 
 @media (prefers-reduced-motion: reduce) {

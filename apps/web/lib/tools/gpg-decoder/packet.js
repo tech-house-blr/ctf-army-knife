@@ -469,17 +469,8 @@ export class Packet {
     }
 
     nextColor() {
-        const colors = [
-            // Dark inks that stay readable (4.5:1+) on the light field-manual theme.
-            "#7a4f00",
-            "#0b6157",
-            "#9c3b0f",
-            "#1f4f8a",
-            "#2d6a2a",
-            "#2c3e50",
-            "#5b5a1c",
-            "#a51c15",
-        ];
+        // Theme variables (--gpg-1..8 in app/globals.css), so each theme sets readable inks.
+        const colors = Array.from({ length: 8 }, (_, index) => `var(--gpg-${index + 1})`);
 
         this.colorIndex = ((this.colorIndex || 0) + 1) % colors.length;
         return colors[this.colorIndex];

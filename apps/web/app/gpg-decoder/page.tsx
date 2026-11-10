@@ -48,84 +48,79 @@ export default function GPGDecoder() {
 
     return (
         <ToolPage>
-            <PageHeader slug="gpg-decoder" lede="Paste an armored OpenPGP message, key or signature to see every packet and the bytes behind each field." />
+            <PageHeader slug="gpg-decoder" />
 
-            <div className="mt-10">
-                <label htmlFor="pgp-message" className="field-label">OpenPGP data</label>
+            <div className="panel mt-5 p-5">
+                <label htmlFor="pgp-message" className="field-label">Armored OpenPGP data</label>
                 <textarea
                     id="pgp-message"
-                    rows={12}
+                    rows={10}
                     spellCheck={false}
-                    className="field text-sm"
+                    className="field text-[0.8667rem]"
                     value={message}
-                    placeholder={"-----BEGIN PGP MESSAGE-----\n\n…\n-----END PGP MESSAGE-----"}
+                    placeholder={"-----BEGIN PGP MESSAGE-----"}
                     onChange={(event) => setMessage(event.target.value)}
                 />
                 <div className="mt-4 flex flex-wrap items-center gap-4">
                     <button type="button" className="btn btn-primary" onClick={handleDecode} disabled={!message.trim()}>
-                        Decode packets
+                        Decode
                     </button>
-                    {error && <p role="alert" className="alert text-sm">{error}</p>}
+                    {error && <p role="alert" className="error-text">{error}</p>}
                 </div>
             </div>
 
-            {packets.length > 0 && (
-                <section className="mt-14" aria-labelledby="packets-heading">
-                    <div className="flex items-baseline justify-between gap-6 border-b-[3px] border-ink pb-3">
-                        <h2 id="packets-heading" className="text-2xl font-extrabold">Packets</h2>
-                        <p className="text-sm text-ink-2">Point at a field to highlight its bytes.</p>
+            {packets.map((packet, packetIndex) => (
+                <section
+                    key={packetIndex}
+                    aria-labelledby={`packet-${packetIndex}`}
+                    className="panel mt-4 grid overflow-hidden lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)]"
+                >
+                    <div className="order-2 min-w-0 border-t border-line bg-inset p-4 lg:order-1 lg:border-t-0 lg:border-r">
+                        <pre className="overflow-x-auto font-mono text-[0.8rem] leading-[1.7]">
+                            {packet.bytes.map((byte, byteOffset) => {
+                                const highlighted = isByteHighlighted(packetIndex, byte.index);
+                                return (
+                                    <Fragment key={byte.index}>
+                                        <span
+                                            className={highlighted ? "rounded-[2px] bg-signal text-on-signal" : ""}
+                                            style={{ color: highlighted ? undefined : byte.color }}
+                                        >
+                                            {byte.hex}
+                                        </span>
+                                        {(byteOffset + 1) % 16 === 0 ? <br /> : " "}
+                                    </Fragment>
+                                );
+                            })}
+                        </pre>
                     </div>
-                    <ol>
-                        {packets.map((packet, packetIndex) => (
-                            <li key={packetIndex} className="grid gap-x-8 gap-y-4 border-b border-ink py-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
-                                <div className="order-2 min-w-0 lg:order-1">
-                                    <pre className="overflow-x-auto bg-well p-4 font-mono text-[0.8125rem] leading-relaxed">
-                                        {packet.bytes.map((byte, byteOffset) => {
-                                            const highlighted = isByteHighlighted(packetIndex, byte.index);
-                                            return (
-                                                <Fragment key={byte.index}>
-                                                    <span
-                                                        className={highlighted ? "bg-ink text-paper" : ""}
-                                                        style={{ color: highlighted ? undefined : byte.color }}
-                                                    >
-                                                        {byte.hex}
-                                                    </span>
-                                                    {(byteOffset + 1) % 16 === 0 ? <br /> : " "}
-                                                </Fragment>
-                                            );
-                                        })}
-                                    </pre>
-                                </div>
 
-                                <div className="order-1 min-w-0 lg:order-2">
-                                    <h3 className="text-xl font-bold leading-tight">{packet.title}</h3>
-                                    <dl className="mt-3 border-t border-ink">
-                                        {packet.fields.map((field, fieldIndex) => (
-                                            <div
-                                                key={`${field.group ?? ""}-${field.name}-${fieldIndex}`}
-                                                className="grid gap-x-4 border-b border-hair py-1.5 hover:bg-sheet sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]"
-                                                onMouseEnter={() => setHoveredField({ packetIndex, span: field.span })}
-                                                onMouseLeave={() => setHoveredField(null)}
-                                            >
-                                                <dt className="flex min-w-0 items-baseline gap-2 text-sm font-semibold [overflow-wrap:anywhere]">
-                                                    <span aria-hidden="true" className="size-2 shrink-0 translate-y-[-1px]" style={{ background: field.color }} />
-                                                    {field.group ? `${field.group}.${field.name}` : field.name}
-                                                </dt>
-                                                <dd className="font-mono text-sm whitespace-pre-wrap break-all">{formatValue(field.value)}</dd>
-                                            </div>
-                                        ))}
-                                    </dl>
-                                    {packet.parseErrors.length > 0 && (
-                                        <ul className="alert mt-4 list-inside list-disc text-sm">
-                                            {packet.parseErrors.map((parseError, index) => <li key={index}>{parseError}</li>)}
-                                        </ul>
-                                    )}
+                    <div className="order-1 min-w-0 p-4 lg:order-2">
+                        <h2 id={`packet-${packetIndex}`} className="font-semibold">{packet.title}</h2>
+                        <dl className="mt-3 text-sm">
+                            {packet.fields.map((field, fieldIndex) => (
+                                <div
+                                    key={`${field.group ?? ""}-${field.name}-${fieldIndex}`}
+                                    className="-mx-2 grid gap-x-4 rounded px-2 py-1 hover:bg-raised sm:grid-cols-[minmax(0,17rem)_minmax(0,1fr)]"
+                                    onMouseEnter={() => setHoveredField({ packetIndex, span: field.span })}
+                                    onMouseLeave={() => setHoveredField(null)}
+                                >
+                                    <dt className="flex min-w-0 items-baseline gap-2 text-fg-2">
+                                        <span aria-hidden="true" className="size-1.5 shrink-0 translate-y-[-1px] rounded-full" style={{ background: field.color }} />
+                                        {/* allow line breaks only after dots */}
+                                        {(field.group ? `${field.group}.${field.name}` : field.name).replaceAll(".", ".\u200b")}
+                                    </dt>
+                                    <dd className="font-mono text-[0.8333rem] break-all whitespace-pre-wrap">{formatValue(field.value)}</dd>
                                 </div>
-                            </li>
-                        ))}
-                    </ol>
+                            ))}
+                        </dl>
+                        {packet.parseErrors.length > 0 && (
+                            <ul className="error-text mt-3 list-inside list-disc">
+                                {packet.parseErrors.map((parseError, index) => <li key={index}>{parseError}</li>)}
+                            </ul>
+                        )}
+                    </div>
                 </section>
-            )}
+            ))}
         </ToolPage>
     );
 }

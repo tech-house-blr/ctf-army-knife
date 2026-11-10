@@ -65,6 +65,3 @@ export const toolsByCategory = () =>
 
 export const toolBySlug = (slug: string) => tools.find((tool) => tool.slug === slug);
 
-/** Where a tool's input goes, in plain words. */
-export const runsWhere = (tool: Tool) =>
-    tool.needsApi ? "Runs on this server" : "Runs in your browser";
