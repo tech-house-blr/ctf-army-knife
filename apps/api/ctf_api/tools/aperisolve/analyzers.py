@@ -17,7 +17,8 @@ from __future__ import annotations
 import logging
 import os
 import re
-from dataclasses import dataclass
+import threading
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -39,6 +40,7 @@ Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS * 2
 _ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
 _EMBEDDED = re.compile(r'embedded file "([^"]+)"')
 _WROTE = re.compile(r'wrote extracted data to "([^"]+)"')
+_GROUP = re.compile(r"^-{4} (.+?) -{4}$")
 Result = dict[str, Any]
 
 
@@ -49,6 +51,7 @@ class Context:
     analysis: Analysis    # where generated images/archives are published
     original_name: str
     password: str
+    cancel: threading.Event = field(default_factory=threading.Event)  # set when the client has gone
 
     def clean(self, text: str) -> str:
         """Show the user's file name instead of server paths, and drop colour codes."""
@@ -101,7 +104,7 @@ class Analyzer:
         raise NotImplementedError
 
     def tool(self, ctx: Context, *args: str | Path) -> ToolResult:
-        result = run_tool([*args], cwd=ctx.work, timeout=TOOL_TIMEOUT)
+        result = run_tool([*args], cwd=ctx.work, timeout=TOOL_TIMEOUT, cancel=ctx.cancel)
         result.stdout, result.stderr = ctx.clean(result.stdout), ctx.clean(result.stderr)
         return result
 
@@ -142,6 +145,11 @@ def channels(array: np.ndarray) -> list[np.ndarray]:
     return [array] if array.ndim == 2 else [array[..., index] for index in range(array.shape[2])]
 
 
+def _bit(plane: np.ndarray, bit: int) -> np.ndarray:
+    """One bit plane as a black/white uint8 image."""
+    return ((plane >> bit) & 1).astype(np.uint8) * np.uint8(255)
+
+
 class Decomposer(Analyzer):
     """Every bit plane of every channel, plus RGB planes superimposed."""
 
@@ -152,21 +160,21 @@ class Decomposer(Analyzer):
         if isinstance(loaded, dict):
             return loaded
         array, mode, note = loaded
-        planes = channels(array.astype(np.uint16))
+        planes = channels(array)  # uint8: shifts and masks need no wider type
         images: dict[str, list[str]] = {}
 
         def save(pixels: np.ndarray, image_mode: str, name: str) -> str:
-            Image.fromarray(pixels.astype(np.uint8), mode=image_mode).save(ctx.analysis.path(name))
+            Image.fromarray(pixels, mode=image_mode).save(ctx.analysis.path(name))
             return ctx.analysis.url(name)
 
         if mode in ("RGB", "RGBA"):
             images["Superimposed"] = [
-                save(np.stack([((planes[c] >> bit) & 1) * 255 for c in range(3)], axis=-1), "RGB",
+                save(np.stack([_bit(planes[c], bit) for c in range(3)], axis=-1), "RGB",
                      f"decomposer_superimposed_bit_{bit}.png")
                 for bit in range(8)
             ]
         for label, plane in zip(_CHANNEL_NAMES[mode], planes, strict=True):
-            images[label] = [save(((plane >> bit) & 1) * 255, "L", f"decomposer_{label.lower()}_bit_{bit}.png")
+            images[label] = [save(_bit(plane, bit), "L", f"decomposer_{label.lower()}_bit_{bit}.png")
                              for bit in range(8)]
         return ok(images=images, note=note)
 
@@ -245,13 +253,30 @@ class Exiftool(Analyzer):
         result = self.tool(ctx, "exiftool", "-a", "-u", "-g1", ctx.input)
         if failure := self.timed_out(result):
             return failure
-        metadata = {}
-        for line in result.stdout.splitlines():
-            if ":" in line and not line.startswith("----"):
-                key, value = (part.strip() for part in line.split(":", 1))
-                if key not in self._HIDDEN:
-                    metadata[key] = value
+        metadata = self.parse(result.stdout)
         return ok(metadata) if metadata else error(result.stderr or "No metadata found.")
+
+    @classmethod
+    def parse(cls, stdout: str) -> dict[str, str]:
+        """Tag -> value. A tag name seen again (e.g. an EXIF and an XMP "Comment")
+        gets its group appended instead of overwriting the first value."""
+        metadata: dict[str, str] = {}
+        group = ""
+        for line in stdout.splitlines():
+            if heading := _GROUP.match(line):
+                group = heading.group(1)
+                continue
+            if ":" not in line:
+                continue
+            key, value = (part.strip() for part in line.split(":", 1))
+            if key in cls._HIDDEN:
+                continue
+            unique, count = key, 1
+            while unique in metadata:
+                count += 1
+                unique = f"{key} [{group}]" if count == 2 and group else f"{key} [{group or 'duplicate'} {count}]"
+            metadata[unique] = value
+        return metadata
 
 
 class Binwalk(Analyzer):
