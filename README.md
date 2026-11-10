@@ -4,7 +4,7 @@ An all-in-one web app of tools for CTFs:
 
 1. GPG/PGP Decoder
 2. CyberChef
-3. AperiSolve (planned)
+3. AperiSolve: image steganography analysis
 4. Cryptogram Solver
 
 ## Quick start
@@ -76,6 +76,29 @@ docs/                     longer-form documentation
 `npm run test:unit` fails if a registry entry has no page, or a page is missing
 from the registry.
 
+### Tools that run external programs
+
+Anything that runs a CLI tool (steghide, binwalk, zsteg, ...) on user files must
+go through `ctf_api/core/sandbox.py`, never `subprocess` directly:
+
+```python
+from ctf_api.core.sandbox import run_tool, save_upload, workspace
+
+@router.post("/api/my-tool")
+async def analyze(file: UploadFile):
+    with workspace() as cwd:                      # private temp dir, always deleted
+        image = cwd / "input"
+        await save_upload(file, image)            # 413 above TOOL_MAX_UPLOAD_BYTES
+        result = run_tool(["exiftool", image], cwd=cwd, timeout=20)
+    return result.to_dict()                       # missing tool / timeout reported, not raised
+```
+
+`run_tool` runs without a shell, kills the whole process tree on timeout, caps
+CPU, memory and file size, truncates output, and hides server environment
+variables. Register new executables in `ctf_api/core/external_tools.py` and
+install them in `apps/api/Dockerfile`. `GET /api/capabilities` reports which
+ones a deployment has.
+
 ## Tests
 
 ```bash
@@ -85,6 +108,21 @@ npm run lint
 npm run test:browser              # Playwright; needs `npx playwright install`
 cd apps/api && pytest             # API
 ```
+
+## AperiSolve
+
+`/aperisolve` takes an upload and runs every applicable analyzer in parallel,
+streaming each result as it finishes: bit planes, colour remapping, PNG repair
+(PCRT), file, ExifTool, binwalk, foremost, pngcheck, identify, steghide, zsteg
+and strings, plus OutGuess with "Deep analysis". Generated images and extracted
+archives are kept for 30 minutes, then deleted.
+
+The analyzers are adapted from [AperiSolve](https://github.com/Zeecka/AperiSolve)
+(MIT); see `apps/api/ctf_api/tools/aperisolve/NOTICE`. Not ported (yet): jsteg,
+jpseek and OpenStego, which aren't packaged for Debian, and upstream's audio
+spectrogram and PDF analyzers. Limits are set with `APERISOLVE_*` environment
+variables in `ctf_api/tools/aperisolve/` (upload size, tool timeout, image size,
+result TTL, concurrent analyses).
 
 ## CyberChef integration
 

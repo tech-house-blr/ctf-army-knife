@@ -21,7 +21,7 @@
 .tool-nav-backdrop { position: fixed; inset: 0; z-index: 30; border: 0; background: #0008; backdrop-filter: blur(3px); cursor: pointer; }
 .tool-nav :focus-visible, .chef-shell :focus-visible { outline: 2px solid #edbd68; outline-offset: 3px; }
 
-.chef-shell { margin-left: 64px; height: 100dvh; min-height: 540px; display: flex; flex-direction: column; padding: 0 16px; background: #111315; color: #e7e8e6; font-family: Arial, Helvetica, sans-serif; }
+.chef-shell { height: 100dvh; min-height: 540px; display: flex; flex-direction: column; padding: 0 16px; background: #111315; color: #e7e8e6; font-family: Arial, Helvetica, sans-serif; }
 .chef-header { flex-shrink: 0; }
 .chef-heading-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; padding: 20px 0 18px; }
 .chef-heading { display: flex; align-items: center; gap: 14px; }
