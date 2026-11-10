@@ -38,7 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 </noscript>
                 <Sidebar />
                 {/* The rail is fixed from 1280px up (--rail-w, narrower when collapsed); keep content clear of it. */}
-                <div id="content" className="flex min-w-0 flex-col transition-[padding] duration-150 xl:pl-(--rail-w)">{children}</div>
+                <div id="content" className="flex min-w-0 flex-col transition-[padding] duration-(--rail-dur) ease-(--ease-liquid) xl:pl-(--rail-w)">{children}</div>
             </body>
         </html>
     );
