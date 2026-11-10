@@ -9,6 +9,10 @@ export default function manifest(): MetadataRoute.Manifest {
         display: "standalone",
         background_color: "#131416",
         theme_color: "#131416",
-        icons: [{ src: "/icon.png", sizes: "99x99", type: "image/png" }],
+        icons: [
+            // The Tech House icons as published (CC BY-NC-ND, so not resized to other sizes).
+            { src: "/icon.png", sizes: "96x96", type: "image/png" },
+            { src: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+        ],
     };
 }
