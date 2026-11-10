@@ -1,0 +1,20 @@
+# Run the whole toolkit: docker compose up --build
+# Web UI on http://localhost:4000, API on http://localhost:8000.
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_SOLVER_API_URL: http://localhost:8000/api/solve
+    ports:
+      - "4000:4000"
+    depends_on:
+      - api
+
+  api:
+    build: apps/api
+    environment:
+      CORS_ORIGINS: http://localhost:4000,http://127.0.0.1:4000
+    ports:
+      - "8000:8000"
