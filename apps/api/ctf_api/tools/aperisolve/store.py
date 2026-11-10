@@ -1,15 +1,16 @@
 """Short-lived storage for generated files (bit-plane images, extracted archives).
 
 Nothing is kept long-term: each analysis gets a random ID directory, and
-directories older than the TTL, or beyond the newest MAX_ANALYSES, are deleted
-whenever a new analysis starts. Files are only served by exact, validated name.
+directories older than the TTL, beyond the newest MAX_ANALYSES, or past the
+MAX_STORED_BYTES budget (oldest first) are deleted whenever a new analysis
+starts. Analyses still running are never purged. Files are only served by
+exact, validated name.
 """
 from __future__ import annotations
 
 import os
 import re
 import secrets
-import shutil
 import tempfile
 import time
 import zipfile
@@ -18,15 +19,21 @@ from pathlib import Path
 from fastapi import HTTPException
 from fastapi.responses import FileResponse
 
+from ctf_api.core.sandbox import directory_size, make_accessible, remove_tree
+
 RESULTS_DIR = Path(os.getenv("APERISOLVE_RESULTS_DIR") or Path(tempfile.gettempdir()) / "aperisolve-results")
 TTL_SECONDS = int(os.getenv("APERISOLVE_RESULT_TTL_SECONDS", "1800"))
 MAX_ANALYSES = int(os.getenv("APERISOLVE_MAX_STORED_ANALYSES", "50"))
-MAX_ARCHIVE_BYTES = int(os.getenv("APERISOLVE_MAX_ARCHIVE_BYTES", str(200 * 1024 * 1024)))
+MAX_ARCHIVE_BYTES = int(os.getenv("APERISOLVE_MAX_ARCHIVE_BYTES", str(50 * 1024 * 1024)))
+# Everything stored lives on the API's /tmp tmpfs (1 GiB in docker-compose.yml),
+# which running analyses also need for scratch space.
+MAX_STORED_BYTES = int(os.getenv("APERISOLVE_MAX_STORED_BYTES", str(256 * 1024 * 1024)))
 MAX_ARCHIVE_FILES = int(os.getenv("APERISOLVE_MAX_ARCHIVE_FILES", "2000"))
 
 URL_PREFIX = "/api/aperisolve/results"
 _ID_RE = re.compile(r"^[A-Za-z0-9_-]{16,64}$")
 _NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+_active: set[str] = set()  # analyses still running in this process; purge() skips them
 
 
 class Analysis:
@@ -36,6 +43,11 @@ class Analysis:
         self.id = secrets.token_urlsafe(18)
         self.dir = RESULTS_DIR / self.id
         self.dir.mkdir(parents=True, mode=0o700)
+        _active.add(self.id)
+
+    def finish(self) -> None:
+        """Mark the analysis complete, so its results become eligible for purging."""
+        _active.discard(self.id)
 
     def path(self, name: str) -> Path:
         if not _NAME_RE.match(name):
@@ -51,6 +63,7 @@ class Analysis:
         Symlinks and special files are skipped, never followed: an extracted
         filesystem image can contain links to server files like /etc/passwd.
         """
+        make_accessible(source)  # extracted files keep their archived modes, e.g. 000
         files: list[tuple[Path, str]] = []
         total = 0
         for root, dirs, filenames in os.walk(source, followlinks=False):
@@ -73,15 +86,21 @@ class Analysis:
 
 
 def purge() -> None:
-    """Delete expired analyses, then the oldest beyond MAX_ANALYSES."""
+    """Delete expired analyses, then the oldest beyond MAX_ANALYSES or MAX_STORED_BYTES."""
     if not RESULTS_DIR.exists():
         return
-    entries = sorted((p for p in RESULTS_DIR.iterdir() if p.is_dir() and _ID_RE.match(p.name)),
+    entries = sorted((p for p in RESULTS_DIR.iterdir()
+                      if p.is_dir() and _ID_RE.match(p.name) and p.name not in _active),
                      key=lambda p: p.stat().st_mtime, reverse=True)
     now = time.time()
+    used = 0
     for index, entry in enumerate(entries):
-        if index >= MAX_ANALYSES or now - entry.stat().st_mtime > TTL_SECONDS:
-            shutil.rmtree(entry, ignore_errors=True)
+        if index < MAX_ANALYSES and now - entry.stat().st_mtime <= TTL_SECONDS:
+            size = directory_size(entry)
+            if used + size <= MAX_STORED_BYTES:
+                used += size
+                continue
+        remove_tree(entry)
 
 
 def serve(analysis_id: str, name: str) -> FileResponse:

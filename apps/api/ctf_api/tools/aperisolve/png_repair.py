@@ -6,6 +6,11 @@ See NOTICE in this package for attribution and license. Changes from upstream:
 - check_chunks() now reports a repair only when it actually fixed a CRC
   (upstream returned True for every valid PNG, so every upload looked repaired)
 - int2hex/str2hex are inlined
+- a tampered IHDR length field is reported and fixed instead of crashing the
+  parser (IHDR data is always 13 bytes)
+- IDAT chunks are split by their declared length when it is consistent, so
+  ancillary chunks after the image data (tEXt, tIME...) are not mistaken for
+  a corrupted IDAT
 """
 
 import binascii
@@ -29,6 +34,8 @@ def int2hex(i: int) -> str:
 
 
 IDAT_NOT_FOUND_OFFSET = -5
+IHDR_DATA_LENGTH = 13
+_CHUNK_TYPE = re.compile(rb"[A-Za-z]{4}")
 
 # The exhaustive width x height CRC search is pure Python and unbounded by the
 # subprocess timeout (it is not a subprocess); a crafted PNG must not be able
@@ -105,8 +112,10 @@ class PNG:
             if pos == -1:
                 self._error("Lost IHDR chunk")
                 return False
-            length = struct.unpack("!I", ihdr_chunk[:4])[0]
-            ihdr = ihdr_chunk[8 : 8 + length]
+            ihdr = ihdr_chunk[8 : 8 + IHDR_DATA_LENGTH]
+        if len(ihdr) != IHDR_DATA_LENGTH:
+            self._error("Truncated IHDR chunk")
+            return False
 
         (
             self.width,
@@ -218,9 +227,8 @@ class PNG:
         if search_start == -1:
             return False
 
-        # Skip past the IHDR chunk
-        ihdr_length = struct.unpack("!I", self.data[search_start - 4 : search_start])[0]
-        search_start = search_start + 4 + ihdr_length + 4
+        # Skip past the IHDR chunk (fixed size; its length field may be tampered with)
+        search_start = search_start + 4 + IHDR_DATA_LENGTH + 4
 
         # Collect all ancillary chunks before IDAT
         for chunk_type in critical_ancillary:
@@ -283,19 +291,26 @@ class PNG:
             self._error("Lost IHDR chunk")
             return False
 
-        length = struct.unpack("!I", ihdr[:4])[0]
-        chunk_type, chunk_ihdr = ihdr[4:8], ihdr[8 : 8 + length]
-        crc = ihdr[8 + length : 12 + length]
+        if len(ihdr) != 25:
+            self._error("Truncated IHDR chunk")
+            return False
+        length = IHDR_DATA_LENGTH
+        chunk_type, chunk_ihdr, crc = ihdr[4:8], ihdr[8:21], ihdr[21:25]
 
         fixed = False
+        declared = struct.unpack("!I", ihdr[:4])[0]
+        if declared != IHDR_DATA_LENGTH:
+            self._log(f"Wrong IHDR length {int2hex(declared)} at offset {int2hex(pos - 4)}, fixed to 0xD")
+            ihdr = struct.pack("!I", IHDR_DATA_LENGTH) + ihdr[4:]
+            fixed = True
+
         if calc_crc := self._check_crc(chunk_type, chunk_ihdr, crc):
             self._log(f"Error IHDR CRC found at offset {int2hex(pos + 4 + length)}")
             self._log(f"Chunk crc: {str2hex(crc)}, Correct crc: {str2hex(calc_crc)}")
             if recovered_ihdr := self._bruteforce_ihdr_dimensions(chunk_type, ihdr, crc):
                 ihdr = ihdr[:8] + recovered_ihdr + crc
                 fixed = True
-
-            if not fixed:
+            else:
                 self._error("Could not recover IHDR dimensions")
         else:
             self._log(f"Correct IHDR CRC at offset {int2hex(pos + 4 + length)}")
@@ -303,7 +318,7 @@ class PNG:
         self.repaired_data.extend(ihdr)
         self._log(f"IHDR chunk check complete at offset {int2hex(pos - 4)}")
 
-        self.get_pic_info(ihdr=chunk_ihdr if not fixed else ihdr[8 : 8 + length])
+        self.get_pic_info(ihdr=ihdr[8:21])
         return fixed
 
     def _fix_dos2unix(
@@ -359,13 +374,18 @@ class PNG:
         ]
 
         idat_table = []
+        pos_list = [p for p in pos_list if p >= 4]
         for i, pos1 in enumerate(pos_list):
-            if i + 1 == len(pos_list):
-                idat_table.append(
-                    self.data[pos1 - 4 : pos_iend - 4 if pos_iend != -1 else len(self.data)],
-                )
+            if i + 1 < len(pos_list):
+                bound = pos_list[i + 1] - 4
             else:
-                idat_table.append(self.data[pos1 - 4 : pos_list[i + 1] - 4])
+                bound = pos_iend - 4 if pos_iend != -1 else len(self.data)
+            if consistent := self._consistent_chunk(pos1 - 4, bound):
+                idat_table.append(consistent)
+                continue
+            # Declared length doesn't line up with a chunk boundary: take every
+            # byte up to the next marker so the DOS->Unix repair can inspect it.
+            idat_table.append(self.data[pos1 - 4 : bound])
 
         offset = idat_begin
         fixed = False
@@ -404,6 +424,19 @@ class PNG:
 
         self._log(f"IDAT chunk check complete at offset {int2hex(idat_begin)}")
         return fixed
+
+    def _consistent_chunk(self, start: int, bound: int) -> bytes | None:
+        """The chunk at `start`, if its declared length ends at a chunk boundary within `bound`.
+
+        A boundary is the next chunk's type (four ASCII letters) or `bound` itself.
+        """
+        length = struct.unpack("!I", self.data[start : start + 4])[0]
+        end = start + 12 + length
+        if end > bound:
+            return None
+        if end != bound and not _CHUNK_TYPE.fullmatch(self.data[end + 4 : end + 8]):
+            return None
+        return self.data[start:end]
 
     def check_iend(self) -> tuple[bool, bytes | None]:
         """Check and repair IEND chunk."""
