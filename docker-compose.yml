@@ -1,0 +1,21 @@
+# Run the whole toolkit: docker compose up --build
+# Open http://localhost:4000. The browser only talks to the web container,
+# which proxies /api/* to the api service over the compose network.
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      API_URL: http://api:8000
+    ports:
+      - "4000:4000"
+    depends_on:
+      - api
+
+  api:
+    build: apps/api
+    # Not published: only the web proxy needs to reach it. Add
+    # ports: ["8000:8000"] to call the API directly from the host.
+    expose:
+      - "8000"

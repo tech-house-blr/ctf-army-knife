@@ -5,16 +5,20 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
     ...nextVitals,
     ...nextTs,
+    // The Next.js app lives in a workspace; the repo-level scripts and tests are linted too.
+    { settings: { next: { rootDir: "apps/web/" } } },
     // Override default ignores of eslint-config-next.
     globalIgnores([
         // Default ignores of eslint-config-next:
-        ".next/**",
-        "out/**",
-        "build/**",
-        "next-env.d.ts",
+        "**/.next/**",
+        "**/out/**",
+        "**/build/**",
+        "**/next-env.d.ts",
         "vendor/**",
         ".cache/**",
-        "public/tools/cyberchef/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "apps/web/public/tools/cyberchef/**",
         "integration/cyberchef/bridge.js",
     ]),
 ]);

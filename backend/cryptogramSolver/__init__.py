@@ -1,1 +1,0 @@
-"""Cryptogram Solver backend package."""
