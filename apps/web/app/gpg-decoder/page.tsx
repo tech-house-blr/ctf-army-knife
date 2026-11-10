@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { decode } from "@/utils/decode";
+import { decode } from "@/lib/tools/gpg-decoder";
 
 type DecodeOutput = ReturnType<typeof decode>;
 type DecodedPacket = DecodeOutput["packets"][number];
@@ -11,14 +11,6 @@ type FieldSpan = PacketViewModel["fields"][number]["span"];
 type HoveredField = {
     packetIndex: number;
     span: [number, number];
-};
-
-const Hex = {
-    encodePretty(bytes: ArrayLike<number>): string {
-        return Array.from(bytes, (byte) =>
-            byte.toString(16).padStart(2, "0"),
-        ).join(" ");
-    },
 };
 
 function formatValue(value: unknown): string {
@@ -44,7 +36,7 @@ export default function GPGDecoder() {
         setHoveredField(null);
 
         try {
-            const result = decode(message, { Hex });
+            const result = decode(message);
 
             setPackets(result.packets.map((packet) => packet.toViewModel()));
         } catch (decodeError: unknown) {
