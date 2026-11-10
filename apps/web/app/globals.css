@@ -139,7 +139,8 @@
     .btn-primary { background: var(--fg); border-color: var(--fg); color: var(--canvas); }
     .btn-primary:hover:not(:disabled) { background: var(--signal); border-color: var(--signal); color: var(--on-signal); }
     .btn-quiet { border-color: transparent; background: transparent; color: var(--fg-2); }
-    .btn-quiet:hover:not(:disabled) { background: var(--raised); color: var(--fg); border-color: transparent; }
+    .btn-quiet:hover:not(:disabled),
+    .btn-quiet[data-held] { background: var(--raised); color: var(--fg); border-color: transparent; }
 
     .field-label { display: block; margin-bottom: 0.4rem; font-size: 0.8667rem; font-weight: 500; color: var(--fg-2); }
     .field {

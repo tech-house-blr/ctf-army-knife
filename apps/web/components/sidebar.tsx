@@ -19,8 +19,9 @@ import { toolHref, toolsByCategory } from "@/lib/tools/registry";
 const fade =
     "whitespace-nowrap transition-[opacity,translate] duration-(--rail-dur) ease-(--ease-liquid) in-data-[rail=collapsed]:xl:-translate-x-2 in-data-[rail=collapsed]:xl:opacity-0";
 
+// data-held: the theme toggle stays lit while its switch animation runs (lib/theme.ts).
 const rowClass =
-    "relative flex min-h-9 w-full items-center gap-3 rounded-md px-2.5 text-left text-[0.9333rem] text-fg-2 no-underline transition-colors duration-100 hover:bg-raised/60 hover:text-fg";
+    "relative flex min-h-9 w-full items-center gap-3 rounded-md px-2.5 text-left text-[0.9333rem] text-fg-2 no-underline transition-colors duration-100 hover:bg-raised/60 hover:text-fg data-held:bg-raised/60 data-held:text-fg";
 
 function useTheme(): Theme {
     return useSyncExternalStore(subscribeTheme, readTheme, (): Theme => "dark");
@@ -28,8 +29,7 @@ function useTheme(): Theme {
 
 /** Theme switch from a click: the new theme grows out of the clicked control. */
 function switchFrom(event: MouseEvent<HTMLElement>, theme: Theme) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    switchTheme(theme, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+    switchTheme(theme, event.currentTarget);
 }
 
 function ThemeIcon({ theme }: { theme: Theme }) {
@@ -107,11 +107,10 @@ function NavLinks({ onNavigate, rail = false }: { onNavigate?: () => void; rail?
     );
 }
 
-/** Project source, the Tech House website, Tech House socials behind Support, and (in the rail) theme and collapse. */
+/** Project source, the Tech House website, Tech House socials behind Support, and (in the rail) the theme switch. */
 function FooterLinks({ rail = false }: { rail?: boolean }) {
     const [supportOpen, setSupportOpen] = useState(false);
     const theme = useTheme();
-    const collapsed = useSyncExternalStore(subscribeRail, readRailCollapsed, () => false);
     const nextTheme: Theme = theme === "dark" ? "light" : "dark";
     const label = (text: string) => <span className={`truncate ${rail ? fade : ""}`}>{text}</span>;
     const external = (href: string, text: string, icon: IconName, title?: string) => (
@@ -157,29 +156,40 @@ function FooterLinks({ rail = false }: { rail?: boolean }) {
                 </div>
             </li>
             {rail && (
-                <>
-                    <li>
-                        <button type="button" onClick={(event) => switchFrom(event, nextTheme)} aria-label={`Switch to ${nextTheme} theme`} title={`Switch to ${nextTheme} theme`} className={rowClass}>
-                            <span className="grid size-[18px] shrink-0 place-items-center"><ThemeIcon theme={theme} /></span>
-                            {label(nextTheme === "light" ? "Light theme" : "Dark theme")}
-                        </button>
-                    </li>
-                    <li>
-                        <button
-                            type="button"
-                            onClick={() => setRailCollapsed(!collapsed)}
-                            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-                            aria-expanded={!collapsed}
-                            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-                            className={rowClass}
-                        >
-                            <Icon name="sidebar" className="size-[18px] shrink-0" />
-                            {label("Collapse")}
-                        </button>
-                    </li>
-                </>
+                <li>
+                    <button type="button" onClick={(event) => switchFrom(event, nextTheme)} aria-label={`Switch to ${nextTheme} theme`} title={`Switch to ${nextTheme} theme`} className={rowClass}>
+                        <span className="grid size-[18px] shrink-0 place-items-center"><ThemeIcon theme={theme} /></span>
+                        {label(nextTheme === "light" ? "Light theme" : "Dark theme")}
+                    </button>
+                </li>
             )}
         </ul>
+    );
+}
+
+/**
+ * Collapse/expand handle on the rail's right edge, in the gap between the logo
+ * and the nav (level with the logo it would touch the collapsed mark). It sits
+ * outside the rail (which clips its overflow) and rides the edge on the rail's
+ * own curve, so it stays in one place relative to the border.
+ */
+function RailToggle() {
+    const collapsed = useSyncExternalStore(subscribeRail, readRailCollapsed, () => false);
+    const label = collapsed ? "Expand sidebar" : "Collapse sidebar";
+    return (
+        <button
+            type="button"
+            onClick={() => setRailCollapsed(!collapsed)}
+            aria-label={label}
+            aria-expanded={!collapsed}
+            title={label}
+            className="fixed top-13 left-[calc(var(--rail-w)-0.8125rem)] z-40 hidden size-6.5 place-items-center rounded-full border border-line-strong bg-rail text-fg-3 shadow-sm transition-[left,color,background-color,border-color] duration-(--rail-dur) ease-(--ease-liquid) hover:border-fg-3 hover:bg-raised hover:text-fg xl:grid"
+        >
+            <Icon
+                name="chevron"
+                className={`size-3.5 transition-[rotate] duration-(--rail-dur) ease-(--ease-liquid) ${collapsed ? "" : "rotate-180"}`}
+            />
+        </button>
     );
 }
 
@@ -215,6 +225,7 @@ export default function Sidebar() {
                     <FooterLinks rail />
                 </div>
             </aside>
+            <RailToggle />
 
             <header className="sticky top-0 z-30 flex h-13 items-center justify-between gap-3 border-b border-line bg-rail/95 px-4 backdrop-blur sm:px-6 xl:hidden">
                 <Link href="/" onClick={() => setOpen(false)} className="shrink-0 rounded-md no-underline" aria-label="Tech House BLR, CTF Army Knife home">
