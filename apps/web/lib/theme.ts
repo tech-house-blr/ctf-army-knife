@@ -36,3 +36,39 @@ export function subscribeTheme(onChange: () => void): () => void {
         window.removeEventListener("storage", onStorage);
     };
 }
+
+type ViewTransitionDocument = Document & {
+    startViewTransition?: (update: () => Promise<void> | void) => { ready: Promise<void> };
+};
+
+/**
+ * Switch theme with a circular reveal growing from `origin` (the toggle's
+ * centre), using the View Transitions API. Falls back to an instant swap where
+ * that's unsupported or the user prefers reduced motion.
+ */
+export function switchTheme(theme: Theme, origin?: { x: number; y: number }): void {
+    const doc = document as ViewTransitionDocument;
+    if (!doc.startViewTransition || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        applyTheme(theme);
+        return;
+    }
+    const { x, y } = origin ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    document.documentElement.dataset.themeSwitching = "";
+    const transition = doc.startViewTransition(async () => {
+        applyTheme(theme);
+        // Give the CyberChef frame (which follows via a storage event) a moment to repaint.
+        await new Promise((resolve) => setTimeout(resolve, 40));
+    });
+    transition.ready
+        .then(() =>
+            document.documentElement
+                .animate(
+                    { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+                    { duration: 620, easing: "cubic-bezier(0.32, 0.72, 0, 1)", pseudoElement: "::view-transition-new(root)" },
+                )
+                .finished,
+        )
+        .catch(() => {})
+        .finally(() => delete document.documentElement.dataset.themeSwitching);
+}

@@ -29,20 +29,20 @@ html.ctf-community {
 }
 html.ctf-community[data-ctf-theme="light"] {
     color-scheme: light;
-    --ctf-canvas: #f3f3f1;
+    --ctf-canvas: #f2f2ef;
     --ctf-panel: #ffffff;
-    --ctf-raised: #f0f0ed;
+    --ctf-raised: #ecece8;
     --ctf-inset: #f7f7f5;
-    --ctf-line: #dededa;
-    --ctf-line-strong: #c9c9c4;
-    --ctf-fg: #17181a;
-    --ctf-fg-2: #55585e;
-    --ctf-fg-3: #6b6e75;
-    --ctf-signal: #1e7a34;
-    --ctf-signal-soft: rgba(30, 122, 52, 0.09);
+    --ctf-line: #d2d2cc;
+    --ctf-line-strong: #8a8a83;
+    --ctf-fg: #0e0f11;
+    --ctf-fg-2: #383b40;
+    --ctf-fg-3: #4d5056;
+    --ctf-signal: #16662a;
+    --ctf-signal-soft: rgba(22, 102, 42, 0.09);
     --ctf-on-signal: #ffffff;
     --ctf-danger: #b3261e;
-    --ctf-selection: rgba(30, 122, 52, 0.16);
+    --ctf-selection: rgba(22, 102, 42, 0.16);
     --ctf-hl1: #d4e2f0; --ctf-hl2: #f0e3c2; --ctf-hl3: #f4d3cf; --ctf-hl4: #e2e9c8; --ctf-hl5: #d2e8db;
 }
 
