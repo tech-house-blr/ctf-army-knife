@@ -19,7 +19,8 @@
         "cyberchef:verify": "node scripts/cyberchef.mjs verify",
         "cyberchef:test-upstream": "node scripts/cyberchef.mjs test-upstream",
         "test:integration": "node --test tests/cyberchef/*.test.mjs",
-        "test:browser": "playwright test"
+        "test:browser": "playwright test",
+        "test:unit": "node --test tests/web/*.test.mjs"
     },
     "engines": {
         "node": "24.x"
