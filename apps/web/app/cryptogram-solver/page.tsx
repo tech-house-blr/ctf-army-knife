@@ -202,7 +202,7 @@ export default function CryptogramSolverPage() {
                                         {index === 0 && <span className="text-sm font-semibold text-red-ink">Best match</span>}
                                         <span className="font-mono text-sm text-ink-2">{solution.score.toFixed(3)}</span>
                                     </div>
-                                    <pre className="font-mono text-base leading-relaxed whitespace-pre-wrap break-words">{solution.plaintext}</pre>
+                                    <pre className="font-mono text-base leading-relaxed whitespace-pre-wrap wrap-break-word">{solution.plaintext}</pre>
                                     <div className="flex gap-5 md:justify-end">
                                         <button type="button" onClick={() => void copy(solution.plaintext, "Plaintext")} className="min-h-10 text-sm font-semibold underline decoration-2 underline-offset-4 hover:text-red-ink">
                                             Copy plaintext

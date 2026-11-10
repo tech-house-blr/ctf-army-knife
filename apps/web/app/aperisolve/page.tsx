@@ -184,7 +184,7 @@ function ResultRow({ slot, running }: { slot: Slot; running: boolean }) {
                 {!result && <p className="text-sm text-ink-2">{running ? "Waiting for this tool." : "No result came back."}</p>}
                 {result?.note && <p className="font-semibold">{result.note}</p>}
                 {result?.error && result.status !== "ok" && (
-                    <pre className="font-mono text-sm whitespace-pre-wrap break-words text-ink-2">{result.error}</pre>
+                    <pre className="font-mono text-sm whitespace-pre-wrap wrap-break-word text-ink-2">{result.error}</pre>
                 )}
                 {result?.images && <ImageGroups groups={result.images} />}
                 {result?.output !== undefined && <Output output={result.output} />}
@@ -277,7 +277,7 @@ function Output({ output }: { output: NonNullable<AnalyzerResult["output"]> }) {
                     {copied ? "Copied" : "Copy output"}
                 </button>
             </div>
-            <pre className="max-h-[28rem] overflow-auto bg-well p-4 font-mono text-[0.8125rem] leading-relaxed whitespace-pre-wrap break-words">
+            <pre className="max-h-[28rem] overflow-auto bg-well p-4 font-mono text-[0.8125rem] leading-relaxed whitespace-pre-wrap wrap-break-word">
                 {shown.join("\n") || "No matching lines."}
             </pre>
         </div>
