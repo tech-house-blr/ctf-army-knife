@@ -1,27 +1,38 @@
 # Build context is the repo root: the web build needs the root workspace
-# lockfile plus vendor/, integration/ and scripts/ for the CyberChef bundle.
-FROM node:24-bookworm AS build
+# lockfile, and CyberChef needs vendor/, integration/ and scripts/.
 
+# CyberChef only depends on its own inputs, so this stage stays cached until
+# vendor/, integration/ or scripts/ change. Editing the app never rebuilds it.
+FROM node:24-bookworm AS cyberchef
 WORKDIR /app
-# Baked into the client bundle; this is the URL the *browser* uses to reach the API.
-ARG NEXT_PUBLIC_SOLVER_API_URL=http://localhost:8000/api/solve
-ENV NEXT_PUBLIC_SOLVER_API_URL=$NEXT_PUBLIC_SOLVER_API_URL \
-    NEXT_TELEMETRY_DISABLED=1 \
-    NODE_OPTIONS=--max-old-space-size=8192
+ENV NODE_OPTIONS=--max-old-space-size=8192
+COPY package.json ./
+COPY scripts scripts
+COPY integration integration
+COPY vendor vendor
+RUN npm run cyberchef:build
+
+
+FROM node:24-bookworm AS build
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY package.json package-lock.json ./
 COPY apps/web/package.json apps/web/
 RUN npm ci --no-audit --no-fund
 
-COPY . .
-# Builds CyberChef into apps/web/public/tools/cyberchef, then the Next.js app.
-RUN npm run build && npm prune --omit=dev
+COPY apps/web apps/web
+COPY --from=cyberchef /app/apps/web/public/tools/cyberchef apps/web/public/tools/cyberchef
+# Build the workspace directly: the root prebuild hook would re-check CyberChef
+# against vendor/, which this stage intentionally does not copy.
+RUN npm run build -w @ctf-army-knife/web && npm prune --omit=dev
 
 
 FROM node:24-bookworm-slim AS runtime
-
 WORKDIR /app
-ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 \
+    # Where the /api proxy forwards to; read per request, so override at runtime.
+    API_URL=http://api:8000
 
 COPY --from=build --chown=node:node /app/package.json ./
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
