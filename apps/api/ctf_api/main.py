@@ -4,6 +4,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from ctf_api.core.external_tools import router as capabilities_router
 from ctf_api.tools.cryptogram.router import router as cryptogram_router
 
 VERSION = "0.1.0"
@@ -14,6 +15,7 @@ app = FastAPI(title="CTF Army Knife API", version=VERSION)
 origins = [origin.strip() for origin in os.getenv("CORS_ORIGINS", DEFAULT_ORIGINS).split(",") if origin.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False, allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
 
+app.include_router(capabilities_router)
 app.include_router(cryptogram_router)
 
 
