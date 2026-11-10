@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import FileDrop from "@/components/file-drop";
 import PageHeader, { ToolPage } from "@/components/page-header";
-import { formatBytes } from "@/lib/format";
 import {
     ANALYZER_INFO,
     DEFAULT_MAX_UPLOAD_BYTES,
@@ -15,6 +14,9 @@ import {
 } from "@/lib/tools/aperisolve/client";
 
 type Slot = { name: string; order: number; result?: AnalyzerResult; durationMs?: number };
+
+const labelOf = (name: string) => ANALYZER_INFO[name]?.label ?? name;
+const seconds = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 
 export default function AperiSolvePage() {
     const [file, setFile] = useState<File | null>(null);
@@ -34,10 +36,6 @@ export default function AperiSolvePage() {
         void fetchUploadLimit(abort.signal).then((limit) => { if (limit) setMaxBytes(limit); });
         return () => abort.abort();
     }, []);
-
-    const preview = useMemo(() => (file?.type.startsWith("image/") ? URL.createObjectURL(file) : null), [file]);
-    const [previewFailed, setPreviewFailed] = useState<string | null>(null);
-    useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
     useEffect(() => () => controller.current?.abort(), []);
 
     async function run(event: FormEvent) {
@@ -70,42 +68,30 @@ export default function AperiSolvePage() {
         }
     }
 
-    const finished = slots.filter((slot) => slot.result).length;
+    const withOutput = slots.filter((slot) => slot.result?.status === "ok");
+    const pending = slots.filter((slot) => !slot.result);
+    const quiet = slots.filter((slot) => slot.result && slot.result.status !== "ok");
+    const finished = slots.length - pending.length;
 
     return (
         <ToolPage>
-            <PageHeader slug="aperisolve" lede="Upload an image or audio file. Bit planes, metadata, embedded files and the usual stego tools all run at once." />
+            <PageHeader slug="aperisolve" />
 
-            <form onSubmit={run} className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
+            <form onSubmit={run} className="panel mt-5 grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_17rem]">
+                <FileDrop
+                    file={file}
+                    onFile={(chosen) => {
+                        setFile(chosen);
+                        setSlots([]);
+                        setInfo(null);
+                        setError("");
+                    }}
+                    maxBytes={maxBytes}
+                    disabled={running}
+                />
                 <div className="flex flex-col gap-4">
-                    <FileDrop
-                        file={file}
-                        onFile={(chosen) => {
-                            setFile(chosen);
-                            setSlots([]);
-                            setInfo(null);
-                            setError("");
-                        }}
-                        maxBytes={maxBytes}
-                        disabled={running}
-                        hint={`PNG, JPEG, BMP, GIF, WAV, or any other file up to ${formatBytes(maxBytes)}`}
-                    />
-                    {preview && previewFailed !== preview && (
-                        // eslint-disable-next-line @next/next/no-img-element -- local object URL preview
-                        <img
-                            src={preview}
-                            alt="Preview of the chosen file"
-                            onError={() => setPreviewFailed(preview)}
-                            className="max-h-72 max-w-full self-start border-2 border-ink bg-sheet object-contain"
-                        />
-                    )}
-                </div>
-
-                <div className="flex flex-col gap-5">
                     <div>
-                        <label htmlFor="stego-password" className="field-label">
-                            Password <span className="field-hint">(optional)</span>
-                        </label>
+                        <label htmlFor="stego-password" className="field-label">Password for steghide and OutGuess</label>
                         <input
                             id="stego-password"
                             type="text"
@@ -116,105 +102,113 @@ export default function AperiSolvePage() {
                             onChange={(event) => setPassword(event.target.value)}
                             className="field font-mono"
                         />
-                        <p className="mt-1.5 text-sm text-ink-2">Used by steghide and OutGuess.</p>
                     </div>
-                    <label className="flex items-start gap-3">
-                        <input type="checkbox" checked={deep} onChange={(event) => setDeep(event.target.checked)} className="mt-1 size-4 accent-ink" />
-                        <span>
-                            <span className="font-semibold">Deep analysis</span>
-                            <span className="block text-sm text-ink-2">Adds slower tools like OutGuess.</span>
-                        </span>
+                    <label className="flex min-h-9 items-center gap-2.5 text-[0.9333rem] text-fg-2">
+                        <input type="checkbox" checked={deep} onChange={(event) => setDeep(event.target.checked)} className="size-4" />
+                        Include slow tools
                     </label>
-                    {error && <p role="alert" className="alert text-sm">{error}</p>}
-                    <button type="submit" disabled={!file || running} className="btn btn-primary w-full">
-                        {running ? `Analyzing: ${finished} of ${slots.length || "?"} done` : "Analyze file"}
+                    <button type="submit" disabled={!file || running} aria-busy={running} className="btn btn-primary mt-auto w-full">
+                        {running ? `Analyzing ${finished}/${slots.length || "…"}` : "Analyze"}
                     </button>
+                    {error && <p role="alert" className="error-text">{error}</p>}
                 </div>
             </form>
 
             {info && (
-                <section className="mt-14" aria-live="polite" aria-labelledby="results-heading">
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b-[3px] border-ink pb-3">
-                        <h2 id="results-heading" className="text-2xl font-extrabold">Results</h2>
-                        <p className="text-sm text-ink-2">
-                            <span className="font-mono text-ink">{info.name}</span>, {info.mime}, {formatBytes(info.size)}
-                            {elapsed !== null && `, finished in ${(elapsed / 1000).toFixed(1)}s`}
+                <section className="panel mt-5 overflow-hidden" aria-live="polite" aria-labelledby="results-heading">
+                    <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-b border-line px-5 py-3">
+                        <h2 id="results-heading" className="font-semibold">Results</h2>
+                        <span className="flex gap-4 text-sm text-fg-3">
+                            <span className="font-mono text-fg-2">{info.name}</span>
+                            {elapsed !== null && <span className="tabular-nums">{seconds(elapsed)}</span>}
+                        </span>
+                    </header>
+
+                    {withOutput.map((slot) => <ResultSection key={slot.name} slot={slot} />)}
+
+                    {pending.length > 0 && (
+                        <p className="flex items-center gap-3 border-b border-line px-5 py-3 text-sm text-fg-2 last:border-b-0">
+                            <span aria-hidden="true" className="size-1.5 animate-pulse rounded-full bg-signal" />
+                            {running ? "Waiting on" : "Did not finish:"} {pending.map((slot) => labelOf(slot.name)).join(", ")}
                         </p>
-                    </div>
-                    <ol>
-                        {slots.map((slot) => <ResultRow key={slot.name} slot={slot} running={running} />)}
-                    </ol>
+                    )}
+
+                    {quiet.length > 0 && (
+                        <details className="group px-5 py-3">
+                            <summary className="flex min-h-7 list-none items-center gap-2 text-sm text-fg-2 marker:hidden hover:text-fg">
+                                <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" className="transition-transform group-open:rotate-90">
+                                    <path d="M3 1.5 6.5 5 3 8.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                                </svg>
+                                No output from {quiet.map((slot) => labelOf(slot.name)).join(", ")}
+                            </summary>
+                            <dl className="mt-2 grid gap-x-6 gap-y-1.5 pb-1 text-sm sm:grid-cols-[10rem_minmax(0,1fr)]">
+                                {quiet.map((slot) => (
+                                    <div key={slot.name} className="contents">
+                                        <dt className="text-fg-2">{labelOf(slot.name)}</dt>
+                                        <dd className="font-mono text-[0.8667rem] wrap-break-word whitespace-pre-wrap text-fg-3">{slot.result?.error}</dd>
+                                    </div>
+                                ))}
+                            </dl>
+                        </details>
+                    )}
                 </section>
             )}
         </ToolPage>
     );
 }
 
-function statusOf(result: AnalyzerResult | undefined, running: boolean) {
-    if (!result) return running ? { label: "Running", mark: "pending" } : { label: "Did not finish", mark: "empty" };
-    if (result.status === "unavailable") return { label: "Not installed", mark: "empty" };
-    if (result.status !== "ok") return { label: "Nothing found", mark: "empty" };
-    if (result.download) return { label: "Extracted files", mark: "found" };
-    return { label: "Done", mark: "done" };
-}
-
-function ResultRow({ slot, running }: { slot: Slot; running: boolean }) {
-    const { label, description } = ANALYZER_INFO[slot.name] ?? { label: slot.name, description: "" };
-    const result = slot.result;
-    const status = statusOf(result, running);
-    const markClass = {
-        found: "bg-red border-red",
-        done: "bg-ink border-ink",
-        empty: "bg-transparent border-ink-2",
-        pending: "bg-transparent border-ink-2 animate-pulse",
-    }[status.mark];
-
+function ResultSection({ slot }: { slot: Slot }) {
+    const result = slot.result!;
+    const found = Boolean(result.download);
     return (
-        <li className="grid gap-x-8 gap-y-3 border-b border-ink py-6 md:grid-cols-[13rem_minmax(0,1fr)]">
-            <div>
-                <h3 className="text-lg font-bold leading-tight">{label}</h3>
-                <p className="mt-1 flex items-center gap-2 text-sm">
-                    <span aria-hidden="true" className={`size-2.5 shrink-0 border-2 ${markClass}`} />
-                    <span className={status.mark === "found" ? "font-semibold text-red-ink" : "text-ink-2"}>{status.label}</span>
-                    {slot.durationMs !== undefined && <span className="text-ink-2">in {(slot.durationMs / 1000).toFixed(1)}s</span>}
-                </p>
-                <p className="mt-2 text-sm text-ink-2">{description}</p>
-            </div>
-            <div className="flex min-w-0 flex-col gap-4">
-                {!result && <p className="text-sm text-ink-2">{running ? "Waiting for this tool." : "No result came back."}</p>}
-                {result?.note && <p className="font-semibold">{result.note}</p>}
-                {result?.error && result.status !== "ok" && (
-                    <pre className="font-mono text-sm whitespace-pre-wrap wrap-break-word text-ink-2">{result.error}</pre>
-                )}
-                {result?.images && <ImageGroups groups={result.images} />}
-                {result?.output !== undefined && <Output output={result.output} />}
-                {result?.download && (
-                    <a href={result.download} download className="btn btn-secondary self-start">
+        <section className="border-b border-line px-5 py-4" aria-labelledby={`r-${slot.name}`}>
+            <header className="flex items-center gap-2.5">
+                {found && <span aria-hidden="true" className="size-1.5 rounded-full bg-signal" />}
+                <h3 id={`r-${slot.name}`} className="font-medium">{labelOf(slot.name)}</h3>
+                {result.note && <span className={`text-sm ${found ? "text-signal" : "text-fg-2"}`}>{result.note}</span>}
+                {slot.durationMs !== undefined && <span className="ml-auto text-sm text-fg-3 tabular-nums">{seconds(slot.durationMs)}</span>}
+            </header>
+            <div className="mt-3 flex min-w-0 flex-col gap-3">
+                {result.images && <ImageGroups groups={result.images} />}
+                {result.output !== undefined && <Output output={result.output} />}
+                {result.download && (
+                    <a href={result.download} download className="btn self-start">
                         Download extracted files
                     </a>
                 )}
             </div>
-        </li>
+        </section>
     );
 }
 
 function ImageGroups({ groups }: { groups: Record<string, string[]> }) {
+    const entries = Object.entries(groups);
+    const labelled = entries.length > 1; // a single group would only repeat the section name
     return (
-        <div className="flex flex-col gap-5">
-            {Object.entries(groups).map(([group, urls]) => (
-                <div key={group}>
-                    <h4 className="mb-2 text-sm font-semibold">{group}</h4>
+        <div className="flex flex-col gap-4">
+            {entries.map(([group, urls]) => (
+                <div key={group} className={labelled ? "grid gap-2 md:grid-cols-[6rem_minmax(0,1fr)] md:items-start" : ""}>
+                    {labelled && <h4 className="text-sm text-fg-2">{group}</h4>}
                     <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-8">
                         {urls.map((url, index) => (
-                            <a key={url} href={url} target="_blank" rel="noreferrer" className="group block no-underline">
+                            <a
+                                key={url}
+                                href={url}
+                                target="_blank"
+                                rel="noreferrer"
+                                title={urls.length === 8 ? `Bit ${index}` : undefined}
+                                className="relative block overflow-hidden rounded-md border border-line bg-inset no-underline transition-colors duration-100 hover:border-signal"
+                            >
                                 {/* eslint-disable-next-line @next/next/no-img-element -- generated per analysis, not optimizable */}
                                 <img
                                     src={url}
                                     alt={urls.length === 8 ? `${group} bit ${index}` : `${group} ${index + 1}`}
                                     loading="lazy"
-                                    className="aspect-square w-full border border-ink bg-well object-contain [image-rendering:pixelated] group-hover:outline-2 group-hover:outline-red"
+                                    className="aspect-square w-full object-contain [image-rendering:pixelated]"
                                 />
-                                {urls.length === 8 && <span className="text-xs text-ink-2">Bit {index}</span>}
+                                {urls.length === 8 && (
+                                    <span className="absolute right-1 bottom-0.5 font-mono text-[0.6667rem] text-fg-2 [text-shadow:0_0_3px_var(--canvas)]">{index}</span>
+                                )}
                             </a>
                         ))}
                     </div>
@@ -232,13 +226,13 @@ function Output({ output }: { output: NonNullable<AnalyzerResult["output"]> }) {
         const rows = Object.entries(output);
         if (rows.length === 0) return null;
         return (
-            <div className="max-h-[28rem] overflow-auto border-t border-ink">
+            <div className="max-h-[26rem] overflow-auto rounded-md border border-line">
                 <table className="w-full text-left text-sm">
                     <tbody>
                         {rows.map(([key, value]) => (
-                            <tr key={key} className="border-b border-hair align-top">
-                                <th scope="row" className="w-[38%] py-1.5 pr-4 font-semibold">{key}</th>
-                                <td className="py-1.5 font-mono break-all">{value}</td>
+                            <tr key={key} className="border-b border-line align-top last:border-b-0 even:bg-inset">
+                                <th scope="row" className="w-[36%] px-3 py-1.5 font-normal text-fg-2">{key}</th>
+                                <td className="px-3 py-1.5 font-mono text-[0.8667rem] break-all">{value}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -252,32 +246,43 @@ function Output({ output }: { output: NonNullable<AnalyzerResult["output"]> }) {
     const needle = filter.toLowerCase();
     const shown = needle ? allLines.filter((line) => line.toLowerCase().includes(needle)) : allLines;
 
-    return (
-        <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-center gap-3">
-                {allLines.length > 20 && (
-                    <input
-                        type="search"
-                        value={filter}
-                        onChange={(event) => setFilter(event.target.value)}
-                        placeholder={`Filter ${allLines.length} lines, e.g. flag or {`}
-                        aria-label="Filter output"
-                        className="field min-h-10 flex-1 font-mono text-sm"
-                    />
-                )}
-                <button
-                    type="button"
-                    onClick={() => {
-                        void navigator.clipboard.writeText(shown.join("\n"));
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 1500);
-                    }}
-                    className="min-h-10 text-sm font-semibold underline decoration-2 underline-offset-4 hover:text-red-ink"
-                >
-                    {copied ? "Copied" : "Copy output"}
-                </button>
+    const copyButton = (
+        <button
+            type="button"
+            onClick={() => {
+                void navigator.clipboard.writeText(shown.join("\n"));
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+            }}
+            className="btn btn-quiet min-h-8 px-2.5 py-1 text-sm"
+        >
+            {copied ? "Copied" : "Copy"}
+        </button>
+    );
+
+    if (allLines.length <= 20) {
+        return (
+            <div className="flex items-start gap-2 rounded-md border border-line bg-inset">
+                <pre className="min-w-0 flex-1 overflow-auto p-3 font-mono text-[0.8667rem] leading-relaxed wrap-break-word whitespace-pre-wrap">{shown.join("\n")}</pre>
+                <div className="shrink-0 p-1.5">{copyButton}</div>
             </div>
-            <pre className="max-h-[28rem] overflow-auto bg-well p-4 font-mono text-[0.8125rem] leading-relaxed whitespace-pre-wrap wrap-break-word">
+        );
+    }
+
+    return (
+        <div className="overflow-hidden rounded-md border border-line bg-inset focus-within:border-signal">
+            <div className="flex items-center gap-2 border-b border-line px-2 py-1.5">
+                <input
+                    type="search"
+                    value={filter}
+                    onChange={(event) => setFilter(event.target.value)}
+                    placeholder={`Filter ${allLines.length} lines`}
+                    aria-label="Filter output"
+                    className="min-h-8 flex-1 rounded bg-transparent px-2 font-mono text-[0.8667rem] text-fg outline-none placeholder:text-fg-3 focus-visible:outline-none"
+                />
+                {copyButton}
+            </div>
+            <pre className="max-h-[26rem] overflow-auto p-3 font-mono text-[0.8667rem] leading-relaxed wrap-break-word whitespace-pre-wrap">
                 {shown.join("\n") || "No matching lines."}
             </pre>
         </div>
