@@ -5,8 +5,8 @@ import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
-    // Tab titles stay short so they fit a narrow tab: each tool sets just its own name.
-    title: "Army Knife",
+    // The home page tab says the full name; each tool page sets just its own short name.
+    title: "CTF Army Knife",
     description: "Self-hosted tools for capture-the-flag challenges: ciphers, encodings, steganography and forensics.",
 };
 
