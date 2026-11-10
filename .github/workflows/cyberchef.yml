@@ -24,7 +24,7 @@ jobs:
         with:
           path: |
             .cache/cyberchef
-            public/tools/cyberchef
+            apps/web/public/tools/cyberchef
           key: ${{ runner.os }}-cyberchef-node24.18.0-v1-${{ hashFiles('vendor/cyberchef/**', 'integration/cyberchef/**', 'scripts/cyberchef*.mjs') }}
       - run: npm ci
       - run: npm run test:integration
