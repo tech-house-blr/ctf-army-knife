@@ -38,10 +38,11 @@ export const tools: readonly Tool[] = [
     {
         slug: "aperisolve",
         name: "AperiSolve",
-        description: "Image steganography analysis.",
+        description: "Image steganography analysis: bit planes, metadata, binwalk, steghide, zsteg and more.",
         icon: "image",
         category: "stego",
-        status: "planned",
+        status: "ready",
+        needsApi: true,
     },
     {
         slug: "gpg-decoder",
