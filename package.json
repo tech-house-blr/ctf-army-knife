@@ -2,12 +2,15 @@
     "name": "ctf-army-knife",
     "version": "0.1.0",
     "private": true,
+    "workspaces": [
+        "apps/web"
+    ],
     "scripts": {
         "predev": "npm run cyberchef:build",
-        "dev": "next dev -p 4000",
+        "dev": "npm run dev -w @ctf-army-knife/web",
         "prebuild": "npm run cyberchef:build",
-        "build": "next build",
-        "start": "next start -p 4000",
+        "build": "npm run build -w @ctf-army-knife/web",
+        "start": "npm run start -w @ctf-army-knife/web",
         "lint": "eslint",
         "cyberchef:import": "node scripts/cyberchef.mjs import",
         "cyberchef:baseline": "node scripts/cyberchef.mjs baseline",
@@ -18,23 +21,13 @@
         "test:integration": "node --test tests/cyberchef/*.test.mjs",
         "test:browser": "playwright test"
     },
-    "engines": { "node": "24.x" },
-    "dependencies": {
-        "next": "^16.4.6",
-        "react": "19.2.8",
-        "react-dom": "19.2.8"
+    "engines": {
+        "node": "24.x"
     },
     "devDependencies": {
         "@playwright/test": "1.63.0",
-        "@tailwindcss/postcss": "^4",
-        "@types/node": "^20",
-        "@types/react": "^19",
-        "@types/react-dom": "^19",
-        "babel-plugin-react-compiler": "1.0.0",
         "eslint": "^9",
-        "eslint-config-next": "16.3.4",
-        "tailwindcss": "^4",
-        "typescript": "^5"
+        "eslint-config-next": "16.3.4"
     },
     "overrides": {
         "@typescript-eslint/typescript-estree": {

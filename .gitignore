@@ -20,8 +20,8 @@ __pycache__/
 /coverage
 
 # next.js
-/.next/
-/out/
+.next/
+/apps/web/out/
 
 # production
 /build
@@ -48,6 +48,6 @@ next-env.d.ts
 
 # Generated CyberChef workspace and isolated dependency/build tree
 /.cache/
-/public/tools/cyberchef/
+/apps/web/public/tools/cyberchef/
 /playwright-report/
 /test-results/
