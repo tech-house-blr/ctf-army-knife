@@ -1,7 +1,8 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import PageHeader, { ToolPage } from "@/components/page-header";
+import { clearHandoff, peekHandoff } from "@/lib/handoff";
 import { decode } from "@/lib/tools/gpg-decoder";
 
 type DecodeOutput = ReturnType<typeof decode>;
@@ -22,22 +23,26 @@ function formatValue(value: unknown): string {
     }
 }
 
+function decodeMessage(message: string): { packets: PacketViewModel[]; error: string } {
+    try {
+        return { packets: decode(message).packets.map((packet) => packet.toViewModel()), error: "" };
+    } catch (decodeError: unknown) {
+        return { packets: [], error: decodeError instanceof Error ? decodeError.message : "Unable to decode this message." };
+    }
+}
+
 export default function GPGDecoder() {
-    const [message, setMessage] = useState<string>("");
-    const [packets, setPackets] = useState<PacketViewModel[]>([]);
-    const [error, setError] = useState<string>("");
+    // Input handed over from the home page is decoded straight away.
+    const [handed] = useState(() => peekHandoff("gpg-decoder")?.text ?? "");
+    const [message, setMessage] = useState<string>(handed);
+    const [result, setResult] = useState(() => (handed ? decodeMessage(handed) : { packets: [], error: "" }));
+    const { packets, error } = result;
     const [hoveredField, setHoveredField] = useState<HoveredField | null>(null);
+    useEffect(() => clearHandoff("gpg-decoder"), []);
 
     function handleDecode(): void {
-        setError("");
         setHoveredField(null);
-        try {
-            const result = decode(message);
-            setPackets(result.packets.map((packet) => packet.toViewModel()));
-        } catch (decodeError: unknown) {
-            setPackets([]);
-            setError(decodeError instanceof Error ? decodeError.message : "Unable to decode this message.");
-        }
+        setResult(decodeMessage(message));
     }
 
     function isByteHighlighted(packetIndex: number, byteIndex: number): boolean {

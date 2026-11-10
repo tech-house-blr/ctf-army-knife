@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import FileDrop from "@/components/file-drop";
+import { clearHandoff, peekHandoff } from "@/lib/handoff";
 import PageHeader, { ToolPage } from "@/components/page-header";
 import {
     ANALYZER_INFO,
@@ -19,7 +20,9 @@ const labelOf = (name: string) => ANALYZER_INFO[name]?.label ?? name;
 const seconds = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 
 export default function AperiSolvePage() {
-    const [file, setFile] = useState<File | null>(null);
+    // A file handed over from the home page is loaded and analyzed straight away.
+    const [handed] = useState(() => peekHandoff("aperisolve")?.file ?? null);
+    const [file, setFile] = useState<File | null>(handed);
     const [password, setPassword] = useState("");
     const [deep, setDeep] = useState(false);
     const [running, setRunning] = useState(false);
@@ -38,9 +41,12 @@ export default function AperiSolvePage() {
     }, []);
     useEffect(() => () => controller.current?.abort(), []);
 
-    async function run(event: FormEvent) {
+    function run(event: FormEvent) {
         event.preventDefault();
-        if (!file) return;
+        if (file) void runWith(file);
+    }
+
+    async function runWith(file: File) {
         controller.current?.abort();
         const abort = new AbortController();
         controller.current = abort;
@@ -72,6 +78,15 @@ export default function AperiSolvePage() {
     const pending = slots.filter((slot) => !slot.result);
     const quiet = slots.filter((slot) => slot.result && slot.result.status !== "ok");
     const finished = slots.length - pending.length;
+
+    // After the functions it calls, which the React compiler requires.
+    useEffect(() => {
+        clearHandoff("aperisolve");
+        if (!handed) return;
+        const timer = setTimeout(() => void runWith(handed), 0);
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- run once, for the handed-over file
+    }, []);
 
     return (
         <ToolPage>
