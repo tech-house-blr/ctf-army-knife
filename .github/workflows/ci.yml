@@ -1,13 +1,13 @@
 name: CI
 
-# Fast per-tool checks. Lint, the full Next.js build and the CyberChef
-# browser suite run in cyberchef.yml.
+# Runs on every push. The slow CyberChef suite (Windows, upstream tests,
+# browser tests) lives in cyberchef.yml and only runs when its inputs change.
 on:
   push:
   pull_request:
 
 jobs:
-  web-unit:
+  web:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,8 +15,22 @@ jobs:
         with:
           node-version: 24.18.0
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            vendor/cyberchef/package-lock.json
+      # Same key as cyberchef.yml, so the CyberChef bundle is normally restored
+      # instead of rebuilt; npm run build only rebuilds it on a cache miss.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .cache/cyberchef
+            apps/web/public/tools/cyberchef
+          key: ${{ runner.os }}-cyberchef-node24.18.0-v1-${{ hashFiles('vendor/cyberchef/**', 'integration/cyberchef/**', 'scripts/cyberchef*.mjs') }}
       - run: npm ci
+      - run: npm run lint
       - run: npm run test:unit
+      - run: npm run test:integration
+      - run: npm run build
 
   api:
     runs-on: ubuntu-latest
