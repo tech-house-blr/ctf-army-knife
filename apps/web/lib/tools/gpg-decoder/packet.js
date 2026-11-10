@@ -470,14 +470,15 @@ export class Packet {
 
     nextColor() {
         const colors = [
-            "#f39c12",
-            "#16a085",
-            "#d35400",
-            "#8e44ad",
-            "#27ae60",
+            // Dark inks that stay readable (4.5:1+) on the light field-manual theme.
+            "#7a4f00",
+            "#0b6157",
+            "#9c3b0f",
+            "#1f4f8a",
+            "#2d6a2a",
             "#2c3e50",
-            "#7f8c8d",
-            "#c0392b",
+            "#5b5a1c",
+            "#a51c15",
         ];
 
         this.colorIndex = ((this.colorIndex || 0) + 1) % colors.length;

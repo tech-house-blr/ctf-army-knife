@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import ToolIcon from "@/components/tool-icon";
 
 const channel = "ctf-army-knife:cyberchef:v1";
 type Status = "loading" | "ready" | "error";
@@ -100,21 +99,28 @@ export default function CyberChefWorkspace({ entry, version }: { entry: string; 
 
     return (
         <main className="chef-shell">
-            <header className="chef-header">
-                <div className="chef-heading-row">
-                    <div><div className="chef-heading"><ToolIcon name="lab" /><h1>CyberChef</h1></div><p className="chef-description">Decode, transform, explore.</p></div>
-                    <div className="chef-actions">
-                        <button onClick={copyLink} className="chef-button" aria-label="Copy workspace link"><ToolIcon name={copyStatus === "Link copied" ? "check" : "link"} /><span>{copyStatus === "Link copied" ? "Copied" : "Copy link"}</span></button>
-                        <a href={directLink} target="_blank" rel="noopener noreferrer" className="chef-button" aria-label="Open workspace directly"><span>Open separately</span><ToolIcon name="external" /></a>
-                    </div>
+            <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 px-4 pt-6 pb-5 sm:px-6 xl:px-8">
+                <div>
+                    <h1 className="display text-[clamp(2.25rem,4.5vw,3.75rem)]">CyberChef</h1>
+                    <p className="mt-3 text-ink-2">Encode, decode, hash and transform data with recipes. Runs in your browser.</p>
+                </div>
+                <div className="flex w-full gap-3 sm:w-auto">
+                    <button onClick={copyLink} className="btn btn-secondary flex-1 sm:flex-none" aria-label="Copy workspace link">
+                        {copyStatus === "Link copied" ? "Copied" : "Copy link"}
+                    </button>
+                    <a href={directLink} target="_blank" rel="noopener noreferrer" className="btn btn-secondary flex-1 sm:flex-none" aria-label="Open workspace directly">
+                        Open in new tab
+                    </a>
                 </div>
             </header>
-            <div className="chef-workspace-frame">
+            <div className="chef-frame">
                 {status !== "ready" && (
-                    <div role={status === "error" ? "alert" : "status"} className="chef-loading">
-                        <span className={`chef-loading-mark ${status === "loading" ? "is-loading" : ""}`}><ToolIcon name="lab" /></span>
-                        <p>{status === "error" ? "CyberChef could not finish loading. Retry or open the workspace directly." : "Loading CyberChef and its workers…"}</p>
-                        {status === "error" && <button onClick={retry} className="chef-button chef-button--primary">Retry loading</button>}
+                    <div role={status === "error" ? "alert" : "status"} className="absolute inset-0 z-10 flex flex-col items-start justify-center gap-5 bg-paper px-8">
+                        {status === "loading" && <span className="chef-loading-bar" aria-hidden="true" />}
+                        <p className={`max-w-[46ch] text-lg ${status === "error" ? "alert" : ""}`}>
+                            {status === "error" ? "CyberChef could not finish loading. Retry, or open the workspace in a new tab." : "Loading CyberChef and its workers…"}
+                        </p>
+                        {status === "error" && <button onClick={retry} className="btn btn-primary">Retry loading</button>}
                     </div>
                 )}
                 {source && (
@@ -130,7 +136,14 @@ export default function CyberChefWorkspace({ entry, version }: { entry: string; 
                     />
                 )}
             </div>
-            <footer className="chef-footer"><span className={`chef-live-status ${status === "ready" ? "is-ready" : ""}`}><i />{status === "ready" ? "Workspace ready" : status === "error" ? "Connection interrupted" : "Preparing workspace"}</span><span className="chef-copy-status" role="status">{copyStatus}</span><span className="chef-credit">Powered by GCHQ CyberChef <span>v{version}</span></span></footer>
+            <footer className="flex min-h-10 flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 py-2 text-sm text-ink-2 sm:px-6 xl:px-8">
+                <span className="flex items-center gap-2">
+                    <span aria-hidden="true" className={`size-2 ${status === "ready" ? "bg-ink" : status === "error" ? "bg-red" : "border-2 border-ink-2"}`} />
+                    {status === "ready" ? "Workspace ready" : status === "error" ? "Connection interrupted" : "Preparing workspace"}
+                </span>
+                <span role="status" className="font-semibold text-ink">{copyStatus}</span>
+                <span>GCHQ CyberChef {version && <span className="font-mono">v{version}</span>}</span>
+            </footer>
         </main>
     );
 }

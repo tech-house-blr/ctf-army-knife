@@ -1,199 +1,323 @@
-/* CTF Army Knife community theme. Upstream themes remain selectable. */
+/* CTF Army Knife community theme: the field-manual look of the host app
+   (apps/web/app/globals.css). Upstream themes remain selectable. */
+@font-face {
+    font-family: "Archivo";
+    src: /* webpackIgnore: true */ url("/fonts/archivo-variable.woff2") format("woff2-variations");
+    font-weight: 100 900;
+    font-stretch: 62% 125%;
+    font-display: swap;
+}
+@font-face {
+    font-family: "IBM Plex Mono";
+    src: /* webpackIgnore: true */ url("/fonts/ibm-plex-mono-400.woff2") format("woff2");
+    font-weight: 400;
+    font-display: swap;
+}
+@font-face {
+    font-family: "IBM Plex Mono";
+    src: /* webpackIgnore: true */ url("/fonts/ibm-plex-mono-600.woff2") format("woff2");
+    font-weight: 600;
+    font-display: swap;
+}
+
 html.ctf-community {
-    color-scheme: dark;
-    --ctf-background: #15181b;
-    --ctf-panel: #191d20;
-    --ctf-border: #2d3338;
-    --ctf-text: #d7dde1;
-    --ctf-accent: #edbd68;
+    color-scheme: light;
+    --ctf-paper: #edede7;
+    --ctf-sheet: #f8f8f4;
+    --ctf-well: #e2e2db;
+    --ctf-ink: #161616;
+    --ctf-ink-2: #55554f;
+    --ctf-hair: #bdbdb4;
+    --ctf-red: #c8231b;
+    --ctf-red-ink: #a51c15;
+    --ctf-sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --ctf-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+
     /* Populate the upstream theme contract, including modals, tabs, and
        operation states, instead of relying on the Classic theme's variables. */
-    --primary-font-family: Arial, Helvetica, sans-serif;
-    --primary-font-colour: #c7ced4;
-    --primary-font-size: 12px;
+    --primary-font-family: var(--ctf-sans);
+    --primary-font-colour: var(--ctf-ink);
+    --primary-font-size: 14px;
     --primary-line-height: 20px;
-    --fixed-width-font-family: Consolas, "Liberation Mono", monospace;
-    --fixed-width-font-colour: #d7dde1;
-    --fixed-width-font-size: 12px;
-    --subtext-font-colour: #7b8791;
-    --subtext-font-size: 11px;
-    --primary-background-colour: #15181b;
-    --secondary-background-colour: #1b1f23;
-    --primary-border-colour: #2d3338;
-    --secondary-border-colour: #252b30;
-    --title-colour: #d7dde1;
-    --title-weight: 500;
-    --title-size: 11px;
-    --title-background-colour: #1b1f23;
-    --banner-font-colour: #7f8a93;
-    --banner-bg-colour: #15181b;
-    --banner-url-colour: #a4afb8;
-    --category-list-font-colour: #a4afb8;
-    --loader-background-colour: #15181b;
-    --loader-outer-colour: #edbd68;
-    --loader-middle-colour: #819e94;
-    --loader-inner-colour: #c3cbd1;
-    --op-list-operation-font-colour: #bfc8cf;
-    --op-list-operation-bg-colour: #191d20;
-    --op-list-operation-border-colour: #252b30;
-    --rec-list-operation-font-colour: #d7dde1;
-    --rec-list-operation-bg-colour: #1d2227;
-    --rec-list-operation-border-colour: #343c44;
-    --selected-operation-font-color: #edbd68;
-    --selected-operation-bg-colour: #2b2821;
-    --selected-operation-border-colour: #80683f;
-    --breakpoint-font-colour: #efc1a0;
-    --breakpoint-bg-colour: #36291e;
-    --breakpoint-border-colour: #866344;
-    --disabled-font-colour: #6d7882;
-    --disabled-bg-colour: #202428;
-    --disabled-border-colour: #343c44;
-    --fc-operation-font-colour: #c7ced4;
-    --fc-operation-bg-colour: #191d20;
-    --fc-operation-border-colour: #2d3338;
-    --fc-breakpoint-operation-font-colour: #edbd68;
-    --fc-breakpoint-operation-bg-colour: #36291e;
-    --fc-breakpoint-operation-border-colour: #866344;
-    --op-title-font-weight: 500;
-    --arg-font-colour: #d7dde1;
-    --arg-background: #15181b;
-    --arg-border-colour: #39434c;
-    --arg-disabled-background: #262d33;
-    --arg-label-colour: #aab4bd;
-    --disable-icon-colour: #75818c;
-    --disable-icon-selected-colour: #f5a8a0;
-    --breakpoint-icon-colour: #75818c;
-    --breakpoint-icon-selected-colour: #edbd68;
-    --btn-default-font-colour: #c7ced4;
-    --btn-default-bg-colour: #22292f;
-    --btn-default-border-colour: #39434c;
-    --btn-default-hover-font-colour: #edbd68;
-    --btn-default-hover-bg-colour: #2b3239;
-    --btn-default-hover-border-colour: #65717c;
-    --btn-success-font-colour: #242016;
-    --btn-success-bg-colour: #edbd68;
-    --btn-success-border-colour: #edbd68;
-    --btn-success-hover-font-colour: #242016;
-    --btn-success-hover-bg-colour: #f7cc84;
-    --btn-success-hover-border-colour: #f7cc84;
-    --hl1: #425e68;
-    --hl2: #706342;
-    --hl3: #b75353;
-    --hl4: #c6ad68;
-    --hl5: #417457;
-    --scrollbar-track: #15181b;
-    --scrollbar-thumb: #39434c;
-    --scrollbar-hover: #586571;
-    --drop-file-border-colour: #edbd68;
-    --table-border-colour: #39434c;
-    --popover-background: #232a30;
-    --popover-border-colour: #4b5761;
-    --code-background: #29333a;
-    --code-font-colour: #edbd68;
-    --input-highlight-colour: #edbd68;
-    --input-border-colour: #39434c;
+    --fixed-width-font-family: var(--ctf-mono);
+    --fixed-width-font-colour: var(--ctf-ink);
+    --fixed-width-font-size: 13px;
+    --subtext-font-colour: var(--ctf-ink-2);
+    --subtext-font-size: 12px;
+    --primary-background-colour: var(--ctf-paper);
+    --secondary-background-colour: var(--ctf-well);
+    --primary-border-colour: var(--ctf-ink);
+    --secondary-border-colour: var(--ctf-hair);
+    --title-colour: var(--ctf-ink);
+    --title-weight: 800;
+    --title-size: 14px;
+    --title-background-colour: var(--ctf-paper);
+    --banner-font-colour: var(--ctf-ink-2);
+    --banner-bg-colour: var(--ctf-paper);
+    --banner-url-colour: var(--ctf-ink);
+    --category-list-font-colour: var(--ctf-ink);
+    --loader-background-colour: var(--ctf-paper);
+    --loader-outer-colour: var(--ctf-ink);
+    --loader-middle-colour: var(--ctf-red);
+    --loader-inner-colour: var(--ctf-ink-2);
+    --op-list-operation-font-colour: var(--ctf-ink);
+    --op-list-operation-bg-colour: var(--ctf-paper);
+    --op-list-operation-border-colour: var(--ctf-hair);
+    --rec-list-operation-font-colour: var(--ctf-ink);
+    --rec-list-operation-bg-colour: var(--ctf-sheet);
+    --rec-list-operation-border-colour: var(--ctf-ink);
+    --selected-operation-font-color: var(--ctf-sheet);
+    --selected-operation-bg-colour: var(--ctf-ink);
+    --selected-operation-border-colour: var(--ctf-ink);
+    --breakpoint-font-colour: var(--ctf-red-ink);
+    --breakpoint-bg-colour: #f6dedb;
+    --breakpoint-border-colour: var(--ctf-red);
+    --disabled-font-colour: var(--ctf-ink-2);
+    --disabled-bg-colour: var(--ctf-well);
+    --disabled-border-colour: var(--ctf-hair);
+    --fc-operation-font-colour: var(--ctf-ink);
+    --fc-operation-bg-colour: var(--ctf-well);
+    --fc-operation-border-colour: var(--ctf-ink);
+    --fc-breakpoint-operation-font-colour: var(--ctf-red-ink);
+    --fc-breakpoint-operation-bg-colour: #f6dedb;
+    --fc-breakpoint-operation-border-colour: var(--ctf-red);
+    --op-title-font-weight: 700;
+    --arg-font-colour: var(--ctf-ink);
+    --arg-background: var(--ctf-sheet);
+    --arg-border-colour: var(--ctf-ink);
+    --arg-disabled-background: var(--ctf-well);
+    --arg-label-colour: var(--ctf-ink-2);
+    --disable-icon-colour: var(--ctf-ink-2);
+    --disable-icon-selected-colour: var(--ctf-red);
+    --breakpoint-icon-colour: var(--ctf-ink-2);
+    --breakpoint-icon-selected-colour: var(--ctf-red);
+    --btn-default-font-colour: var(--ctf-ink);
+    --btn-default-bg-colour: transparent;
+    --btn-default-border-colour: var(--ctf-ink);
+    --btn-default-hover-font-colour: var(--ctf-sheet);
+    --btn-default-hover-bg-colour: var(--ctf-ink);
+    --btn-default-hover-border-colour: var(--ctf-ink);
+    --btn-success-font-colour: var(--ctf-paper);
+    --btn-success-bg-colour: var(--ctf-ink);
+    --btn-success-border-colour: var(--ctf-ink);
+    --btn-success-hover-font-colour: var(--ctf-paper);
+    --btn-success-hover-bg-colour: var(--ctf-red);
+    --btn-success-hover-border-colour: var(--ctf-red);
+    /* Output highlight colours: readable tints on paper. */
+    --hl1: #cfdcea;
+    --hl2: #ede0bd;
+    --hl3: #f2cfcb;
+    --hl4: #dfe6c4;
+    --hl5: #cfe3d6;
+    --scrollbar-track: var(--ctf-paper);
+    --scrollbar-thumb: #9d9d95;
+    --scrollbar-hover: var(--ctf-ink-2);
+    --drop-file-border-colour: var(--ctf-red);
+    --table-border-colour: var(--ctf-ink);
+    --popover-background: var(--ctf-sheet);
+    --popover-border-colour: var(--ctf-ink);
+    --code-background: var(--ctf-well);
+    --code-font-colour: var(--ctf-ink);
+    --input-highlight-colour: var(--ctf-ink);
+    --input-border-colour: var(--ctf-ink);
 }
+
+/* Surfaces */
 html.ctf-community body,
 html.ctf-community #content-wrapper,
 html.ctf-community #workspace-wrapper {
-    background: var(--ctf-background);
-    color: var(--ctf-text);
+    background: var(--ctf-paper);
+    color: var(--ctf-ink);
+    font-family: var(--ctf-sans);
 }
-html.ctf-community .title,
-html.ctf-community #banner,
-html.ctf-community #controls,
 html.ctf-community .modal-content,
 html.ctf-community .dropdown-menu,
-html.ctf-community .card,
-html.ctf-community .operation {
-    background: var(--ctf-panel);
-    color: var(--ctf-text);
-    border-color: var(--ctf-border);
+html.ctf-community .card {
+    background: var(--ctf-sheet);
+    color: var(--ctf-ink);
+    border: 2px solid var(--ctf-ink);
+    border-radius: 0;
+    box-shadow: none;
 }
-html.ctf-community a,
-html.ctf-community .title,
-html.ctf-community .btn-primary,
-html.ctf-community .btn-secondary,
-html.ctf-community .material-icons {
-    color: var(--ctf-accent);
+html.ctf-community a { color: var(--ctf-ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+html.ctf-community a:hover { color: var(--ctf-red-ink); }
+html.ctf-community .material-icons { color: var(--ctf-ink); }
+html.ctf-community .btn:hover .material-icons,
+html.ctf-community .btn:focus-visible .material-icons { color: inherit; }
+
+/* Pane frames: visible structure instead of shading. */
+html.ctf-community .gutter { background-color: var(--ctf-ink); }
+html.ctf-community .gutter:hover { background-color: var(--ctf-red); }
+html.ctf-community .gutter.gutter-horizontal { width: 2px !important; }
+html.ctf-community .gutter.gutter-vertical { height: 2px !important; }
+
+/* Pane titles. The four panes are a real sequence (pick operations, build the
+   recipe, give input, read output), so they are numbered. */
+html.ctf-community .title {
+    color: var(--ctf-ink);
+    background: var(--ctf-paper);
+    border-bottom: 2px solid var(--ctf-ink);
+    font-family: var(--ctf-sans);
+    font-size: 14px;
+    font-weight: 800;
+    font-stretch: 110%;
+    letter-spacing: -0.01em;
+    text-transform: none;
 }
+html.ctf-community #operations > .title::before,
+html.ctf-community #recipe > .title::before,
+html.ctf-community #input > .title::before,
+html.ctf-community #output > .title::before {
+    display: inline-block;
+    min-width: 1.5em;
+    margin-right: 6px;
+    color: var(--ctf-red);
+    font: 800 14px var(--ctf-sans);
+}
+html.ctf-community #operations > .title::before { content: "1"; }
+html.ctf-community #recipe > .title::before { content: "2"; }
+html.ctf-community #input > .title::before { content: "3"; }
+html.ctf-community #output > .title::before { content: "4"; }
+
+/* Banner */
+html.ctf-community #banner { background: var(--ctf-paper); border-bottom: 2px solid var(--ctf-ink); font-size: 12px; }
+html.ctf-community #notice { font: 12px var(--ctf-sans); color: var(--ctf-ink-2); letter-spacing: 0; }
+html.ctf-community #banner a { color: var(--ctf-ink); text-decoration: none; }
+html.ctf-community #banner a:hover { color: var(--ctf-red-ink); }
+
+/* Operations list */
+html.ctf-community #search {
+    height: 40px;
+    margin: 10px 10px 12px;
+    width: calc(100% - 20px);
+    border: 2px solid var(--ctf-ink);
+    border-radius: 0;
+    background: var(--ctf-sheet);
+    color: var(--ctf-ink);
+    font: 14px var(--ctf-sans);
+    box-shadow: none;
+}
+html.ctf-community #search:focus { outline: 2px solid var(--ctf-red); outline-offset: 0; box-shadow: none; }
+html.ctf-community #categories a { color: var(--ctf-ink); text-decoration: none; }
+html.ctf-community .category-title {
+    padding: 10px 14px;
+    background: var(--ctf-paper);
+    border-top: 1px solid var(--ctf-ink);
+    font-size: 13px;
+    font-weight: 700;
+}
+html.ctf-community .op-list .operation {
+    color: var(--ctf-ink);
+    padding: 8px 15px;
+    font-size: 13px;
+    background: var(--ctf-paper);
+    border-color: var(--ctf-hair);
+    transition: background-color 100ms, color 100ms;
+}
+html.ctf-community .op-list .operation:hover { color: var(--ctf-sheet); background: var(--ctf-ink); }
+
+/* Recipe */
+html.ctf-community #rec-list { background: var(--ctf-paper); }
+html.ctf-community #rec-list .operation {
+    margin: 10px;
+    border: 2px solid var(--ctf-ink);
+    border-radius: 0;
+    padding: 12px 14px;
+    background: var(--ctf-sheet);
+    box-shadow: none;
+}
+html.ctf-community #rec-list .operation .op-title { font-weight: 700; font-size: 14px; }
+html.ctf-community #rec-list:empty::before {
+    content: "Build your recipe";
+    position: absolute;
+    top: 28%;
+    left: 20px;
+    right: 20px;
+    padding: 28px 16px 64px;
+    border: 2px dashed var(--ctf-ink);
+    color: var(--ctf-ink);
+    font: 800 18px var(--ctf-sans);
+    text-align: center;
+    pointer-events: none;
+}
+html.ctf-community #rec-list:empty::after {
+    content: "Drag operations here, or double-click\Aone in the list to add it.";
+    position: absolute;
+    top: calc(28% + 62px);
+    left: 20px;
+    right: 20px;
+    white-space: pre-line;
+    color: var(--ctf-ink-2);
+    font: 13px/1.6 var(--ctf-sans);
+    text-align: center;
+    pointer-events: none;
+}
+
+/* Controls */
+html.ctf-community #controls { background: var(--ctf-paper); border-top: 2px solid var(--ctf-ink); }
+html.ctf-community .btn { border-radius: 0; box-shadow: none !important; font-family: var(--ctf-sans); text-transform: none; }
+html.ctf-community #bake {
+    border-radius: 0;
+    background: var(--ctf-ink);
+    color: var(--ctf-paper);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+html.ctf-community #bake img { display: none; }
+html.ctf-community #bake:hover { background: var(--ctf-red); color: var(--ctf-paper); }
+html.ctf-community #bake .material-icons { color: inherit; }
+html.ctf-community #step { color: var(--ctf-ink); font-weight: 700; }
+
+/* Editors and form fields */
 html.ctf-community .form-control,
 html.ctf-community select,
 html.ctf-community textarea,
-html.ctf-community input,
+html.ctf-community input {
+    background-color: var(--ctf-sheet);
+    color: var(--ctf-ink);
+    border-color: var(--ctf-ink);
+    border-radius: 0;
+    caret-color: var(--ctf-red);
+}
 html.ctf-community .cm-editor,
 html.ctf-community .cm-content,
-html.ctf-community .cm-gutters {
-    background-color: var(--ctf-panel);
-    color: var(--ctf-text);
-    border-color: var(--ctf-border);
-    caret-color: var(--ctf-accent);
-}
+html.ctf-community .cm-gutters { background-color: var(--ctf-sheet); color: var(--ctf-ink); caret-color: var(--ctf-red); }
+html.ctf-community .cm-scroller { padding: 8px 0; line-height: 1.7; font-family: var(--ctf-mono); }
+html.ctf-community .cm-gutters { color: var(--ctf-ink-2); border-right: 1px solid var(--ctf-hair); }
+html.ctf-community .cm-placeholder { color: var(--ctf-ink-2); }
+html.ctf-community .cm-activeLine,
+html.ctf-community .cm-activeLineGutter { background-color: #efefe9; }
 html.ctf-community .cm-focused .cm-selectionBackground,
 html.ctf-community .cm-selectionBackground,
-html.ctf-community ::selection { background-color: #854d0e; }
-html.ctf-community .cm-activeLine,
-html.ctf-community .cm-activeLineGutter { background-color: #1c2227; }
+html.ctf-community ::selection { background-color: #c9d6e4; }
 html.ctf-community input::placeholder,
 html.ctf-community textarea::placeholder,
-html.ctf-community .bmd-help { color: #a8a29e; }
-html.ctf-community .btn-success,
-html.ctf-community #bake {
-    background: var(--ctf-accent);
-    color: #242016;
-}
-html.ctf-community #bake .material-icons { color: #1c1917; }
+html.ctf-community .bmd-help { color: var(--ctf-ink-2); }
+html.ctf-community .bmd-form-group .form-control,
+html.ctf-community .is-focused .form-control { background-image: linear-gradient(to top, var(--ctf-red) 2px, transparent 2px), none; }
+
+/* Status colours */
 html.ctf-community .btn-danger,
-html.ctf-community .text-danger { color: #fca5a5; }
-html.ctf-community .text-warning { color: #fdba74; }
-html.ctf-community .gutter { background-color: var(--ctf-border); }
+html.ctf-community .text-danger { color: var(--ctf-red-ink); }
+html.ctf-community .text-warning { color: #7a4f00; }
+
+/* Modals */
+html.ctf-community .modal-header,
+html.ctf-community .modal-footer { border-color: var(--ctf-ink); }
+html.ctf-community .modal-title { color: var(--ctf-ink); font-size: 20px; font-weight: 800; }
+html.ctf-community .modal-backdrop.show { opacity: 0.35; }
+
+html.ctf-community .operation.disabled { opacity: 0.5; }
+
 html.ctf-community :focus-visible {
-    outline: 2px solid var(--ctf-accent);
+    outline: 2px solid var(--ctf-red);
     outline-offset: 2px;
 }
+
 /* Preserve the upstream minimum pane widths on small screens. */
 @media (max-width: 1050px) {
     html body { overflow-x: auto; }
     #content-wrapper { min-width: 1024px; }
 }
-
-html.ctf-community #banner { font-size: 10px; }
-html.ctf-community #notice { font: 9px Consolas, monospace; letter-spacing: .5px; color: #7e8992; }
-html.ctf-community #banner a { color: #aab4bc; }
-html.ctf-community #banner a:hover { color: #edbd68; }
-html.ctf-community .title { color: #d7dde1; background: #1b1f23; text-transform: uppercase; font-size: 10px; letter-spacing: 1.3px; }
-html.ctf-community #operations > .title::before,
-html.ctf-community #recipe > .title::before,
-html.ctf-community #input > .title::before,
-html.ctf-community #output > .title::before { display: inline-block; margin-right: 10px; color: #edbd68; font: 9px Consolas, monospace; letter-spacing: 0; }
-html.ctf-community #operations > .title::before { content: "01 /"; }
-html.ctf-community #recipe > .title::before { content: "02 /"; }
-html.ctf-community #input > .title::before { content: "03 /"; }
-html.ctf-community #output > .title::before { content: "04 /"; }
-html.ctf-community #search { height: 40px; margin: 10px 10px 14px; width: calc(100% - 20px); border: 1px solid #343e47; border-radius: 6px; background: #121619; font-size: 11px; }
-html.ctf-community #search:focus { border-color: #edbd68; box-shadow: 0 0 0 2px #edbd6810; }
-html.ctf-community #categories a { color: #939fa9; }
-html.ctf-community .category-title { padding: 12px 14px; font-size: 10px; font-weight: 500; letter-spacing: .3px; background: #1b1f23; }
-html.ctf-community .op-list .operation { padding: 9px 15px; font-size: 11px; background: #171b1f; transition: background .15s, color .15s; }
-html.ctf-community .op-list .operation:hover { color: #edbd68; background: #edbd680b; }
-html.ctf-community #rec-list { background: radial-gradient(ellipse at 50% 40%, #edbd6803, transparent 70%), #15181b; }
-html.ctf-community #rec-list .operation { margin: 12px; border: 1px solid #39434c; border-radius: 8px; padding: 15px; background: #1d2227; box-shadow: 0 2px 8px #0002; }
-html.ctf-community #rec-list:empty::before { content: "Build your recipe"; position: absolute; top: 29%; left: 20px; right: 20px; padding: 30px 12px 70px; border: 1px dashed #3c444b; border-radius: 10px; color: #c0c8ce; font-size: 13px; text-align: center; pointer-events: none; }
-html.ctf-community #rec-list:empty::after { content: "Drag operations here, or double-click\Aone from the library to get started."; position: absolute; top: calc(29% + 59px); left: 20px; right: 20px; white-space: pre-line; color: #7d8993; font-size: 10px; line-height: 1.8; text-align: center; pointer-events: none; }
-html.ctf-community .btn-primary, html.ctf-community .btn-secondary, html.ctf-community .material-icons { color: #9ca8b2; }
-html.ctf-community .btn:hover, html.ctf-community .btn:hover .material-icons { color: #edbd68; }
-html.ctf-community #bake { border-radius: 6px; box-shadow: none; font-size: 12px; font-weight: 600; letter-spacing: .3px; }
-html.ctf-community #bake img { display: none; }
-html.ctf-community #bake::before { content: "▶"; margin-right: 8px; font-size: 10px; }
-html.ctf-community #bake:hover { color: #242016; background: #f7cc84; }
-html.ctf-community #controls { border-top: 1px solid #343c43; }
-html.ctf-community .cm-scroller { padding: 8px 0; line-height: 1.8; }
-html.ctf-community .cm-gutters { color: #5d6b76; border-right: 1px solid #252c32; }
-html.ctf-community .cm-placeholder { color: #64717b; font-size: 11px; }
-html.ctf-community .modal-content { border: 1px solid #404b54; border-radius: 10px; }
-html.ctf-community .modal-header, html.ctf-community .modal-footer { border-color: #333e47; }
-html.ctf-community .modal-title { color: #e2e7eb; font-size: 16px; }
-html.ctf-community .gutter { background-color: #2c3339; }
-html.ctf-community .gutter:hover { background-color: #8c744b; }
-html.ctf-community .operation.disabled { opacity: .5; }
 @media (prefers-reduced-motion: reduce) { html.ctf-community * { transition: none !important; } }

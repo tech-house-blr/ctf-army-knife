@@ -90,8 +90,10 @@ test("settings, file loading, output download, and the sidebar remain reachable"
     page.once("dialog", (dialog) => dialog.accept("output.txt"));
     await frame.locator("#save-to-file").click();
     expect((await download).suggestedFilename()).toBeTruthy();
-    await page.getByRole("button", { name: "Open navigation" }).click();
-    await page.getByRole("link", { name: "Dashboard", exact: true }).click();
+    // From 1280px up the tool rail is always visible; below that it sits behind "Open navigation".
+    const openNavigation = page.getByRole("button", { name: "Open navigation" });
+    if (await openNavigation.isVisible()) await openNavigation.click();
+    await page.getByRole("link", { name: "All tools", exact: true }).click();
     await expect(page.getByRole("heading", { name: "CTF Army Knife" })).toBeVisible();
 });
 
