@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { DragEvent } from "react";
+import { formatBytes } from "@/lib/format";
 
 type FileDropProps = {
     file: File | null;
@@ -12,9 +13,6 @@ type FileDropProps = {
     hint?: string;
 };
 
-const formatSize = (bytes: number) =>
-    bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KiB` : `${(bytes / 1024 / 1024).toFixed(1)} MiB`;
-
 /** Reusable file picker: click, drag and drop, or paste (Ctrl+V) an image. */
 export default function FileDrop({ file, onFile, accept, maxBytes, disabled, hint }: FileDropProps) {
     const input = useRef<HTMLInputElement>(null);
@@ -24,7 +22,7 @@ export default function FileDrop({ file, onFile, accept, maxBytes, disabled, hin
     function choose(candidate: File | undefined) {
         if (!candidate || disabled) return;
         if (maxBytes && candidate.size > maxBytes) {
-            setError(`${candidate.name} is ${formatSize(candidate.size)}; the limit is ${formatSize(maxBytes)}.`);
+            setError(`${candidate.name} is ${formatBytes(candidate.size)}; the limit is ${formatBytes(maxBytes)}.`);
             return;
         }
         setError("");
@@ -66,7 +64,7 @@ export default function FileDrop({ file, onFile, accept, maxBytes, disabled, hin
                 {file ? (
                     <>
                         <span className="font-mono break-all">{file.name}</span>
-                        <span className="text-sm text-stone-300">{formatSize(file.size)} · click or drop to replace</span>
+                        <span className="text-sm text-stone-300">{formatBytes(file.size)} · click or drop to replace</span>
                     </>
                 ) : (
                     <>
