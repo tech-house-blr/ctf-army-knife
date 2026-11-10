@@ -4,7 +4,7 @@ import { toolHref, toolsByCategory } from "@/lib/tools/registry";
 export default function Home() {
     const groups = toolsByCategory();
     return (
-        <main className="w-full max-w-[1180px] px-4 pt-6 pb-16 sm:px-6 sm:pt-8 xl:px-10">
+        <main className="w-full max-w-295 px-4 pt-6 pb-16 sm:px-6 sm:pt-8 xl:px-10">
             <h1 className="flex min-h-10 items-center text-xl font-semibold tracking-tight">CTF Army Knife</h1>
             <div className="panel mt-6 grid gap-px overflow-hidden bg-line md:grid-cols-[repeat(var(--cols),minmax(0,1fr))]" style={{ "--cols": groups.length } as React.CSSProperties}>
                 {groups.map((group) => (

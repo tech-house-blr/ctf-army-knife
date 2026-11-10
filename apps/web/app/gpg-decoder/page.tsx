@@ -82,7 +82,7 @@ export default function GPGDecoder() {
                                 return (
                                     <Fragment key={byte.index}>
                                         <span
-                                            className={highlighted ? "rounded-[2px] bg-signal text-on-signal" : ""}
+                                            className={highlighted ? "rounded-xs bg-signal text-on-signal" : ""}
                                             style={{ color: highlighted ? undefined : byte.color }}
                                         >
                                             {byte.hex}
@@ -105,7 +105,7 @@ export default function GPGDecoder() {
                                     onMouseLeave={() => setHoveredField(null)}
                                 >
                                     <dt className="flex min-w-0 items-baseline gap-2 text-fg-2">
-                                        <span aria-hidden="true" className="size-1.5 shrink-0 translate-y-[-1px] rounded-full" style={{ background: field.color }} />
+                                        <span aria-hidden="true" className="size-1.5 shrink-0 -translate-y-px rounded-full" style={{ background: field.color }} />
                                         {/* allow line breaks only after dots */}
                                         {(field.group ? `${field.group}.${field.name}` : field.name).replaceAll(".", ".\u200b")}
                                     </dt>

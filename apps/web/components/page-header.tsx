@@ -14,5 +14,5 @@ export default function PageHeader({ slug, actions }: { slug: string; actions?: 
 
 /** Standard page frame for a tool: content width and gutters. */
 export function ToolPage({ children }: { children: React.ReactNode }) {
-    return <main className="w-full max-w-[1180px] px-4 pt-6 pb-16 sm:px-6 sm:pt-8 xl:px-10">{children}</main>;
+    return <main className="w-full max-w-295 px-4 pt-6 pb-16 sm:px-6 sm:pt-8 xl:px-10">{children}</main>;
 }

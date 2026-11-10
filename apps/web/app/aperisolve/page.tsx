@@ -226,7 +226,7 @@ function Output({ output }: { output: NonNullable<AnalyzerResult["output"]> }) {
         const rows = Object.entries(output);
         if (rows.length === 0) return null;
         return (
-            <div className="max-h-[26rem] overflow-auto rounded-md border border-line">
+            <div className="max-h-104 overflow-auto rounded-md border border-line">
                 <table className="w-full text-left text-sm">
                     <tbody>
                         {rows.map(([key, value]) => (
@@ -282,7 +282,7 @@ function Output({ output }: { output: NonNullable<AnalyzerResult["output"]> }) {
                 />
                 {copyButton}
             </div>
-            <pre className="max-h-[26rem] overflow-auto p-3 font-mono text-[0.8667rem] leading-relaxed wrap-break-word whitespace-pre-wrap">
+            <pre className="max-h-104 overflow-auto p-3 font-mono text-[0.8667rem] leading-relaxed wrap-break-word whitespace-pre-wrap">
                 {shown.join("\n") || "No matching lines."}
             </pre>
         </div>
