@@ -46,7 +46,7 @@ export default function FileDrop({ file, onFile, accept, maxBytes, disabled, hin
     }
 
     return (
-        <div className="w-full max-w-4xl">
+        <div className="w-full">
             <button
                 type="button"
                 disabled={disabled}
@@ -57,19 +57,19 @@ export default function FileDrop({ file, onFile, accept, maxBytes, disabled, hin
                 }}
                 onDragLeave={() => setDragging(false)}
                 onDrop={onDrop}
-                className={`flex min-h-36 w-full cursor-pointer flex-col items-center justify-center gap-2 border-2 border-dashed p-6 text-amber-300 transition disabled:cursor-wait disabled:opacity-60 ${
-                    dragging ? "border-amber-200 bg-amber-300/10" : "border-amber-300 hover:bg-amber-300/5"
+                className={`flex min-h-40 w-full flex-col items-start justify-center gap-1 border-2 border-dashed px-6 py-8 text-left transition-colors duration-100 disabled:cursor-wait disabled:opacity-60 ${
+                    dragging ? "border-red bg-sheet" : "border-ink bg-sheet/60 hover:bg-sheet"
                 }`}
             >
                 {file ? (
                     <>
-                        <span className="font-mono break-all">{file.name}</span>
-                        <span className="text-sm text-stone-300">{formatBytes(file.size)} · click or drop to replace</span>
+                        <span className="font-mono text-lg font-medium break-all">{file.name}</span>
+                        <span className="text-sm text-ink-2">{formatBytes(file.size)}. Click or drop another file to replace it.</span>
                     </>
                 ) : (
                     <>
-                        <span className="text-lg">Drop a file here, click to choose, or paste</span>
-                        {hint && <span className="text-sm text-stone-300">{hint}</span>}
+                        <span className="text-xl font-bold">Drop a file here, click to choose, or paste</span>
+                        {hint && <span className="text-sm text-ink-2">{hint}</span>}
                     </>
                 )}
             </button>
@@ -84,7 +84,7 @@ export default function FileDrop({ file, onFile, accept, maxBytes, disabled, hin
                 }}
             />
             {error && (
-                <p role="alert" className="mt-2 text-sm text-red-300">
+                <p role="alert" className="alert mt-3 text-sm">
                     {error}
                 </p>
             )}
