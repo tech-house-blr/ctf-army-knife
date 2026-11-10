@@ -7,7 +7,9 @@
     ],
     "scripts": {
         "predev": "npm run cyberchef:build",
+        "setup": "node scripts/setup.mjs",
         "dev": "npm run dev -w @ctf-army-knife/web",
+        "dev:all": "node scripts/dev-all.mjs",
         "prebuild": "npm run cyberchef:build",
         "build": "npm run build -w @ctf-army-knife/web",
         "start": "npm run start -w @ctf-army-knife/web",
@@ -20,7 +22,8 @@
         "cyberchef:test-upstream": "node scripts/cyberchef.mjs test-upstream",
         "test:integration": "node --test tests/cyberchef/*.test.mjs",
         "test:browser": "playwright test",
-        "test:unit": "node --test tests/web/*.test.mjs"
+        "test:unit": "node --test tests/web/*.test.mjs",
+        "test:api": "node scripts/test-api.mjs"
     },
     "engines": {
         "node": "24.x"

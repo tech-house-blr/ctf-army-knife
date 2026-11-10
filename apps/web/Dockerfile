@@ -1,13 +1,14 @@
 # Build context is the repo root: the web build needs the root workspace
-# lockfile, and CyberChef needs vendor/, integration/ and scripts/.
+# lockfile, and CyberChef needs vendor/, integration/ and scripts/cyberchef*.mjs.
 
 # CyberChef only depends on its own inputs, so this stage stays cached until
-# vendor/, integration/ or scripts/ change. Editing the app never rebuilds it.
+# vendor/, integration/ or its build scripts change. Editing the app (or the
+# other developer scripts) never rebuilds it.
 FROM node:24-bookworm AS cyberchef
 WORKDIR /app
 ENV NODE_OPTIONS=--max-old-space-size=8192
 COPY package.json ./
-COPY scripts scripts
+COPY scripts/cyberchef*.mjs scripts/
 COPY integration integration
 COPY vendor vendor
 RUN npm run cyberchef:build

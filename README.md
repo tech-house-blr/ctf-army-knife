@@ -22,19 +22,22 @@ compiles CyberChef; after that it is cached until `vendor/`, `integration/` or
 
 ### Local development
 
-You need Node.js 24 and Python 3.12 or newer.
+You need Node.js 24 and Python 3.12 or newer. No Docker needed.
 
 ```bash
-# Web app (also builds CyberChef the first time)
-npm ci
-npm run dev                      # http://localhost:4000
-
-# API, needed by the cryptogram solver
-cd apps/api
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements-dev.txt
-uvicorn ctf_api.main:app --reload --port 8000
+npm run setup      # once: npm ci, the API virtualenv and its packages, CyberChef
+npm run dev:all    # API on :8000 and web app on http://localhost:4000, in one terminal
 ```
+
+`dev:all` labels each server's output and stops both on Ctrl+C. It reuses the
+existing CyberChef build; run `npm run cyberchef:build` after changing
+`integration/cyberchef/`. AperiSolve's CLI tools (binwalk, zsteg, steghide,
+ExifTool...) are only installed in the API's Docker image, so locally those
+analyzers report "not installed".
+
+To run the servers separately: `npm run dev -w @ctf-army-knife/web` for the web
+app, and `apps/api/.venv/bin/uvicorn ctf_api.main:app --reload --port 8000`
+(from `apps/api`) for the API.
 
 The web app proxies `/api/*` to `API_URL` (default `http://127.0.0.1:8000`),
 so frontend code always calls same-origin paths like `fetch("/api/solve")`.
@@ -54,7 +57,7 @@ apps/
     tests/
 vendor/cyberchef/         pinned upstream CyberChef source (git subtree)
 integration/cyberchef/    our theme, bridge and build patches for CyberChef
-scripts/                  CyberChef build tooling
+scripts/                  CyberChef build tooling; setup, dev:all and test:api helpers
 tests/
   web/                    unit tests for client-side tool logic
   cyberchef/              CyberChef integration tests
@@ -106,7 +109,7 @@ npm run test:unit                 # client-side tool logic
 npm run test:integration          # CyberChef build tooling
 npm run lint
 npm run test:browser              # Playwright; needs `npx playwright install`
-cd apps/api && pytest             # API
+npm run test:api                  # API, in its virtualenv (tool tests skip if a tool isn't installed)
 ```
 
 ## AperiSolve
