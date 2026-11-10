@@ -1,9 +1,10 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import CyberChefWorkspace from "@/components/cyberchef-workspace";
+import { toolMetadata } from "@/lib/tools/registry";
 
 export const dynamic = "force-static";
-export const metadata = { title: "CyberChef · CTF Army Knife" };
+export const metadata = toolMetadata("cyberchef");
 
 export default async function CyberChefPage() {
     let manifest: { entry?: string };

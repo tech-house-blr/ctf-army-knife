@@ -295,6 +295,59 @@ html.ctf-community .modal-backdrop.show { opacity: 0.5; }
 
 html.ctf-community .operation.disabled { opacity: 0.5; }
 
+/* Status-bar choosers (input/output encoding, line endings): upstream draws
+   these as light menus regardless of theme. */
+html.ctf-community .cm-status-bar-select:hover .cm-status-bar-select-btn,
+html.ctf-community .cm-status-bar-select-btn:hover,
+html.ctf-community .cm-status-bar-select-btn.show,
+html.ctf-community .cm-status-bar-select.show .cm-status-bar-select-btn,
+html.ctf-community .cm-status-bar-select-content.show + .cm-status-bar-select-btn { background: var(--ctf-raised); color: var(--ctf-fg); }
+html.ctf-community .cm-status-bar-select-btn { background: transparent; color: var(--ctf-fg-2); border-radius: 4px; }
+html.ctf-community .cm-status-bar-select-content {
+    background: var(--ctf-raised);
+    color: var(--ctf-fg);
+    border: 1px solid var(--ctf-line-strong);
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+}
+html.ctf-community .cm-status-bar-select-content a,
+html.ctf-community .cm-status-bar-select-content li { color: var(--ctf-fg-2); background: transparent; }
+html.ctf-community .cm-status-bar-select-content a:hover,
+html.ctf-community .cm-status-bar-select-content li:hover,
+html.ctf-community .cm-status-bar-select-content .active { color: var(--ctf-fg); background: var(--ctf-panel); }
+html.ctf-community .cm-status-bar-select-content input,
+html.ctf-community .cm-status-bar-filter-input { background: var(--ctf-inset); color: var(--ctf-fg); border-color: var(--ctf-line-strong); }
+
+/* Tooltips and dropdown items */
+html.ctf-community .tooltip-inner {
+    background: var(--ctf-raised);
+    color: var(--ctf-fg);
+    border: 1px solid var(--ctf-line-strong);
+    border-radius: 6px;
+    font: 12px var(--ctf-sans);
+}
+html.ctf-community .tooltip .arrow::before { border-top-color: var(--ctf-line-strong); border-bottom-color: var(--ctf-line-strong); }
+html.ctf-community .dropdown-item { color: var(--ctf-fg-2); }
+html.ctf-community .dropdown-item:hover,
+html.ctf-community .dropdown-item:focus,
+html.ctf-community .dropdown-item.active { color: var(--ctf-fg); background: var(--ctf-raised); }
+
+/* Bootstrap-material's blue: links, primary text buttons, checkboxes, tabs */
+html.ctf-community .btn.btn-primary,
+html.ctf-community .btn.btn-secondary,
+html.ctf-community .btn.btn-link { color: var(--ctf-fg); background: transparent; }
+html.ctf-community .btn.btn-primary:hover,
+html.ctf-community .btn.btn-link:hover { color: var(--ctf-signal); background: var(--ctf-raised); }
+html.ctf-community :is(.checkbox, .checkbox-inline) .checkbox-decorator .check { border-color: var(--ctf-line-strong); }
+html.ctf-community :is(.checkbox, .checkbox-inline) input[type=checkbox]:checked + .checkbox-decorator .check { background: var(--ctf-signal); border-color: var(--ctf-signal); }
+html.ctf-community :is(.checkbox, .checkbox-inline) input[type=checkbox]:checked + .checkbox-decorator .check::before { color: var(--ctf-on-signal); }
+html.ctf-community input[type=checkbox] { accent-color: var(--ctf-signal); }
+html.ctf-community .nav-tabs .nav-link { color: var(--ctf-fg-2); background: transparent; }
+html.ctf-community .nav-tabs .nav-link:hover { color: var(--ctf-fg); }
+html.ctf-community .nav-tabs .nav-link.active { color: var(--ctf-fg); background: var(--ctf-raised); }
+html.ctf-community .nav-tabs .nav-link.active::after,
+html.ctf-community .nav-tabs .bmd-nav-link-indicator { background: var(--ctf-signal); }
+
 html.ctf-community :focus-visible {
     outline: 2px solid var(--ctf-signal);
     outline-offset: 2px;
