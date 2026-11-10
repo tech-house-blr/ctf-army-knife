@@ -76,6 +76,29 @@ docs/                     longer-form documentation
 `npm run test:unit` fails if a registry entry has no page, or a page is missing
 from the registry.
 
+### Tools that run external programs
+
+Anything that runs a CLI tool (steghide, binwalk, zsteg, ...) on user files must
+go through `ctf_api/core/sandbox.py`, never `subprocess` directly:
+
+```python
+from ctf_api.core.sandbox import run_tool, save_upload, workspace
+
+@router.post("/api/my-tool")
+async def analyze(file: UploadFile):
+    with workspace() as cwd:                      # private temp dir, always deleted
+        image = cwd / "input"
+        await save_upload(file, image)            # 413 above TOOL_MAX_UPLOAD_BYTES
+        result = run_tool(["exiftool", image], cwd=cwd, timeout=20)
+    return result.to_dict()                       # missing tool / timeout reported, not raised
+```
+
+`run_tool` runs without a shell, kills the whole process tree on timeout, caps
+CPU, memory and file size, truncates output, and hides server environment
+variables. Register new executables in `ctf_api/core/external_tools.py` and
+install them in `apps/api/Dockerfile`. `GET /api/capabilities` reports which
+ones a deployment has.
+
 ## Tests
 
 ```bash
