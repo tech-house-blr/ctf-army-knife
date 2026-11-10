@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ToolIcon, { type ToolIconName } from "@/components/tool-icon";
+import { toolHref, tools } from "@/lib/tools/registry";
 
 export default function Sidebar() {
     const [collapsed, setIsCollapsed] = useState(true);
@@ -11,10 +12,12 @@ export default function Sidebar() {
 
     const menuItems: { name: string; href: string; icon: ToolIconName; number: string }[] = [
         { name: "Dashboard", href: "/", icon: "grid", number: "00" },
-        { name: "Cryptogram Solver", href: "/cryptogramSolver", icon: "cipher", number: "01" },
-        { name: "CyberChef", href: "/cyberchef", icon: "lab", number: "02" },
-        { name: "AperiSolve", href: "/aperisolve", icon: "image", number: "03" },
-        { name: "GPG Decoder", href: "/gpgDecoder", icon: "key", number: "04" },
+        ...tools.map((tool, index) => ({
+            name: tool.name,
+            href: toolHref(tool),
+            icon: tool.icon,
+            number: String(index + 1).padStart(2, "0"),
+        })),
     ];
 
     return (
