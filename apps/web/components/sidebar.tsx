@@ -78,16 +78,17 @@ export default function Sidebar() {
         };
     }, [open]);
 
+    // Fixed pixel renditions (see brand.tsx): never scale these with CSS.
     const wordmark = (onClick?: () => void) => (
-        <Link href="/" onClick={onClick} className="flex items-end gap-2.5 rounded-md no-underline" aria-label="Tech House BLR, CTF Army Knife home">
-            <TechHouseMark className="h-7 w-auto shrink-0" />
-            <TechHouseWordmark className="mb-0.5 h-3.75 w-auto" />
+        <Link href="/" onClick={onClick} className="flex shrink-0 items-end gap-2 rounded-md no-underline" aria-label="Tech House BLR, CTF Army Knife home">
+            <TechHouseMark className="shrink-0" />
+            <TechHouseWordmark className="max-[359px]:hidden" />
         </Link>
     );
 
     return (
         <>
-            <aside className="fixed inset-y-0 left-0 z-30 hidden w-58 flex-col border-r border-line bg-rail px-4 pt-5 pb-4 xl:flex">
+            <aside className="fixed inset-y-0 left-0 z-30 hidden w-66 flex-col border-r border-line bg-rail px-4 pt-5 pb-4 xl:flex">
                 <div className="px-3">{wordmark()}</div>
                 <div className="mt-7 flex-1 overflow-y-auto pl-0">
                     <NavLinks />

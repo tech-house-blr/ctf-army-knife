@@ -17,8 +17,8 @@ export default function Home() {
                     aria-label="Tech House BLR on GitHub"
                     className="flex items-end gap-3 rounded-md p-1 opacity-90 no-underline transition-opacity duration-100 hover:opacity-100"
                 >
-                    <TechHouseMark className="h-9 w-auto" />
-                    <TechHouseWordmark className="mb-1 h-4 w-auto" />
+                    <TechHouseMark size="md" />
+                    <TechHouseWordmark size="md" className="max-[359px]:hidden" />
                 </a>
             </header>
             <div className="panel mt-8 grid gap-px overflow-hidden bg-line md:grid-cols-[repeat(var(--cols),minmax(0,1fr))]" style={{ "--cols": groups.length } as React.CSSProperties}>
