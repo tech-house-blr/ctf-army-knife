@@ -1,12 +1,13 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import CyberChefWorkspace from "@/components/cyberchef-workspace";
+import { toolMetadata } from "@/lib/tools/registry";
 
 export const dynamic = "force-static";
-export const metadata = { title: "CyberChef · CTF Army Knife" };
+export const metadata = toolMetadata("cyberchef");
 
 export default async function CyberChefPage() {
-    let manifest: { entry?: string; upstream?: { version?: string } };
+    let manifest: { entry?: string };
     try {
         manifest = JSON.parse(
             await readFile(path.join(process.cwd(), "public/tools/cyberchef/manifest.json"), "utf8"),
@@ -17,5 +18,5 @@ export default async function CyberChefPage() {
     if (!manifest.entry || !/^\/tools\/cyberchef\/[a-f0-9]{20}\/index\.html$/.test(manifest.entry)) {
         throw new Error("Invalid CyberChef manifest. Run npm run cyberchef:build.");
     }
-    return <CyberChefWorkspace entry={manifest.entry} version={manifest.upstream?.version ?? ""} />;
+    return <CyberChefWorkspace entry={manifest.entry} />;
 }

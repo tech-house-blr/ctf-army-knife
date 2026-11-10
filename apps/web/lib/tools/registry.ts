@@ -1,4 +1,4 @@
-import type { ToolIconName } from "@/components/tool-icon";
+import type { IconName } from "@/components/icons";
 
 /**
  * Single source of truth for every tool in the app. The sidebar and dashboard
@@ -9,8 +9,10 @@ export type Tool = {
     /** URL segment, kebab-case. The route lives at app/<slug>/page.tsx. */
     slug: string;
     name: string;
+    /** Browser tab title: as short as possible. */
+    title: string;
+    icon: IconName;
     description: string;
-    icon: ToolIconName;
     category: "crypto" | "encoding" | "forensics" | "stego";
     status: "ready" | "planned";
     /** True when the tool calls the Python API in apps/api. */
@@ -21,8 +23,9 @@ export const tools: readonly Tool[] = [
     {
         slug: "cryptogram-solver",
         name: "Cryptogram Solver",
-        description: "Break monoalphabetic substitution ciphers with frequency analysis and simulated annealing.",
+        title: "Cryptogram",
         icon: "cipher",
+        description: "Break monoalphabetic substitution ciphers with frequency analysis and simulated annealing.",
         category: "crypto",
         status: "ready",
         needsApi: true,
@@ -30,16 +33,18 @@ export const tools: readonly Tool[] = [
     {
         slug: "cyberchef",
         name: "CyberChef",
+        title: "CyberChef",
+        icon: "chef",
         description: "The full CyberChef operation catalog, served locally.",
-        icon: "lab",
         category: "encoding",
         status: "ready",
     },
     {
         slug: "aperisolve",
         name: "AperiSolve",
+        title: "AperiSolve",
+        icon: "layers",
         description: "Image steganography analysis: bit planes, metadata, binwalk, steghide, zsteg and more.",
-        icon: "image",
         category: "stego",
         status: "ready",
         needsApi: true,
@@ -47,11 +52,36 @@ export const tools: readonly Tool[] = [
     {
         slug: "gpg-decoder",
         name: "GPG Decoder",
-        description: "Inspect OpenPGP packets in armored or binary messages.",
+        title: "GPG",
         icon: "key",
+        description: "Inspect OpenPGP packets in armored or binary messages.",
         category: "crypto",
         status: "ready",
     },
 ];
 
 export const toolHref = (tool: Tool) => `/${tool.slug}`;
+
+/** Display names for categories, in the order they appear in navigation. */
+export const categories: readonly { id: Tool["category"]; label: string }[] = [
+    { id: "crypto", label: "Crypto" },
+    { id: "encoding", label: "Encoding" },
+    { id: "stego", label: "Steganography" },
+    { id: "forensics", label: "Forensics" },
+];
+
+/** Categories that have at least one tool, each with its tools. */
+export const toolsByCategory = () =>
+    categories
+        .map((category) => ({ ...category, tools: tools.filter((tool) => tool.category === category.id) }))
+        .filter((group) => group.tools.length > 0);
+
+export const toolBySlug = (slug: string) => tools.find((tool) => tool.slug === slug);
+
+/** Page metadata for a tool route: just its short title. */
+export function toolMetadata(slug: string) {
+    const tool = toolBySlug(slug);
+    if (!tool) throw new Error(`Unknown tool: ${slug}`);
+    return { title: tool.title };
+}
+
