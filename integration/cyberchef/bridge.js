@@ -110,11 +110,6 @@
                 document.title = "CTF Army Knife · " + document.title;
             }
         };
-        const notice = document.getElementById("notice");
-        if (notice) {
-            notice.textContent = "CyberChef community build";
-            notice.removeAttribute("data-help");
-        }
         lastHash = window.location.hash;
         send("ready");
     }, { once: true });
