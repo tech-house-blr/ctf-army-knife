@@ -99,26 +99,23 @@ export default function CyberChefWorkspace({ entry, version }: { entry: string; 
 
     return (
         <main className="chef-shell">
-            <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 px-4 pt-6 pb-5 sm:px-6 xl:px-8">
-                <div>
-                    <h1 className="display text-[clamp(2.25rem,4.5vw,3.75rem)]">CyberChef</h1>
-                    <p className="mt-3 text-ink-2">Encode, decode, hash and transform data with recipes. Runs in your browser.</p>
-                </div>
-                <div className="flex w-full gap-3 sm:w-auto">
-                    <button onClick={copyLink} className="btn btn-secondary flex-1 sm:flex-none" aria-label="Copy workspace link">
+            <header className="flex min-h-10 flex-wrap items-center justify-between gap-3 px-4 pt-6 pb-4 sm:px-6 xl:px-10">
+                <h1 className="text-xl font-semibold tracking-tight">CyberChef</h1>
+                <div className="flex gap-2">
+                    <button onClick={copyLink} className="btn" aria-label="Copy workspace link">
                         {copyStatus === "Link copied" ? "Copied" : "Copy link"}
                     </button>
-                    <a href={directLink} target="_blank" rel="noopener noreferrer" className="btn btn-secondary flex-1 sm:flex-none" aria-label="Open workspace directly">
+                    <a href={directLink} target="_blank" rel="noopener noreferrer" className="btn" aria-label="Open workspace directly">
                         Open in new tab
                     </a>
                 </div>
             </header>
-            <div className="chef-frame">
+            <div className="chef-frame panel mx-4 sm:mx-6 xl:mx-10">
                 {status !== "ready" && (
-                    <div role={status === "error" ? "alert" : "status"} className="absolute inset-0 z-10 flex flex-col items-start justify-center gap-5 bg-paper px-8">
-                        {status === "loading" && <span className="chef-loading-bar" aria-hidden="true" />}
-                        <p className={`max-w-[46ch] text-lg ${status === "error" ? "alert" : ""}`}>
-                            {status === "error" ? "CyberChef could not finish loading. Retry, or open the workspace in a new tab." : "Loading CyberChef and its workers…"}
+                    <div role={status === "error" ? "alert" : "status"} className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-panel px-8 text-center">
+                        {status === "loading" && <span className="chef-progress" aria-hidden="true" />}
+                        <p className={status === "error" ? "error-text" : "text-fg-2"}>
+                            {status === "error" ? "CyberChef could not finish loading." : "Loading CyberChef and its workers…"}
                         </p>
                         {status === "error" && <button onClick={retry} className="btn btn-primary">Retry loading</button>}
                     </div>
@@ -136,13 +133,12 @@ export default function CyberChefWorkspace({ entry, version }: { entry: string; 
                     />
                 )}
             </div>
-            <footer className="flex min-h-10 flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 py-2 text-sm text-ink-2 sm:px-6 xl:px-8">
-                <span className="flex items-center gap-2">
-                    <span aria-hidden="true" className={`size-2 ${status === "ready" ? "bg-ink" : status === "error" ? "bg-red" : "border-2 border-ink-2"}`} />
-                    {status === "ready" ? "Workspace ready" : status === "error" ? "Connection interrupted" : "Preparing workspace"}
+            <footer className="flex min-h-10 items-center justify-between gap-6 px-4 py-2 text-[0.8rem] text-fg-3 sm:px-6 xl:px-10">
+                <span className="flex items-center gap-2" role="status">
+                    <span aria-hidden="true" className={`size-1.5 rounded-full ${status === "ready" ? "bg-fg-3" : status === "error" ? "bg-danger" : "animate-pulse bg-signal"}`} />
+                    {copyStatus || (status === "ready" ? "Ready" : status === "error" ? "Not loaded" : "Loading")}
                 </span>
-                <span role="status" className="font-semibold text-ink">{copyStatus}</span>
-                <span>GCHQ CyberChef {version && <span className="font-mono">v{version}</span>}</span>
+                <span>GCHQ CyberChef {version && <span className="tabular-nums">{version}</span>}</span>
             </footer>
         </main>
     );
