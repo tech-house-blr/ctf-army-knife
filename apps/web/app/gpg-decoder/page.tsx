@@ -1,12 +1,13 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import PageHeader, { ToolPage } from "@/components/page-header";
+import { clearHandoff, peekHandoff } from "@/lib/handoff";
 import { decode } from "@/lib/tools/gpg-decoder";
 
 type DecodeOutput = ReturnType<typeof decode>;
 type DecodedPacket = DecodeOutput["packets"][number];
 type PacketViewModel = ReturnType<DecodedPacket["toViewModel"]>;
-type FieldSpan = PacketViewModel["fields"][number]["span"];
 
 type HoveredField = {
     packetIndex: number;
@@ -14,10 +15,7 @@ type HoveredField = {
 };
 
 function formatValue(value: unknown): string {
-    if (typeof value === "string") {
-        return value;
-    }
-
+    if (typeof value === "string") return value;
     try {
         return JSON.stringify(value, null, 2) ?? String(value);
     } catch {
@@ -25,205 +23,109 @@ function formatValue(value: unknown): string {
     }
 }
 
+function decodeMessage(message: string): { packets: PacketViewModel[]; error: string } {
+    try {
+        return { packets: decode(message).packets.map((packet) => packet.toViewModel()), error: "" };
+    } catch (decodeError: unknown) {
+        return { packets: [], error: decodeError instanceof Error ? decodeError.message : "Unable to decode this message." };
+    }
+}
+
 export default function GPGDecoder() {
-    const [message, setMessage] = useState<string>("");
-    const [packets, setPackets] = useState<PacketViewModel[]>([]);
-    const [error, setError] = useState<string>("");
+    // Input handed over from the home page is decoded straight away.
+    const [handed] = useState(() => peekHandoff("gpg-decoder")?.text ?? "");
+    const [message, setMessage] = useState<string>(handed);
+    const [result, setResult] = useState(() => (handed ? decodeMessage(handed) : { packets: [], error: "" }));
+    const { packets, error } = result;
     const [hoveredField, setHoveredField] = useState<HoveredField | null>(null);
+    useEffect(() => clearHandoff("gpg-decoder"), []);
 
     function handleDecode(): void {
-        setError("");
         setHoveredField(null);
-
-        try {
-            const result = decode(message);
-
-            setPackets(result.packets.map((packet) => packet.toViewModel()));
-        } catch (decodeError: unknown) {
-            setPackets([]);
-
-            setError(
-                decodeError instanceof Error
-                    ? decodeError.message
-                    : "Unable to decode this message.",
-            );
-        }
+        setResult(decodeMessage(message));
     }
 
-    function isByteHighlighted(
-        packetIndex: number,
-        byteIndex: number,
-    ): boolean {
-        if (!hoveredField || hoveredField.packetIndex !== packetIndex) {
-            return false;
-        }
-
+    function isByteHighlighted(packetIndex: number, byteIndex: number): boolean {
+        if (!hoveredField || hoveredField.packetIndex !== packetIndex) return false;
         const [start, end] = hoveredField.span;
-
         return byteIndex >= start && byteIndex < end;
     }
 
     return (
-        <div className="flex w-full flex-col items-center gap-6">
-            <h1 className="mt-5 text-center text-3xl text-amber-300">
-                GPG Decoder
-            </h1>
+        <ToolPage>
+            <PageHeader slug="gpg-decoder" />
 
-            <p className="text-amber-300">
-                This tool decodes PGP packet data in JavaScript.
-            </p>
-
-            <textarea
-                rows={15}
-                cols={60}
-                spellCheck={false}
-                className="w-full max-w-4xl border-2 border-amber-300 bg-transparent p-5 text-amber-300 outline-none"
-                value={message}
-                placeholder="Paste an ASCII-armored PGP message"
-                onChange={(event) => setMessage(event.target.value)}
-            />
-
-            <button
-                type="button"
-                className="cursor-pointer rounded-md border-2 border-amber-300 p-2 text-amber-300 transition hover:bg-amber-300 hover:text-stone-800"
-                onClick={handleDecode}
-            >
-                Decode
-            </button>
-
-            {error && (
-                <p
-                    role="alert"
-                    className="w-full max-w-4xl rounded-md border border-red-500 bg-red-950/40 p-4 text-red-300"
-                >
-                    {error}
-                </p>
-            )}
-
-            {packets.length > 0 && (
-                <div className="w-full max-w-6xl overflow-x-auto">
-                    <table className="w-full border-collapse">
-                        <thead>
-                            <tr className="text-left text-amber-300">
-                                <th className="border border-amber-300 p-3">
-                                    Bytes
-                                </th>
-                                <th className="border border-amber-300 p-3">
-                                    Packet details
-                                </th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {packets.map((packet, packetIndex) => (
-                                <tr key={packetIndex} className="align-top">
-                                    <td className="border border-amber-300 p-3">
-                                        <pre className="min-w-96 whitespace-pre-wrap font-mono text-sm">
-                                            {packet.bytes.map(
-                                                (byte, byteOffset) => {
-                                                    const highlighted =
-                                                        isByteHighlighted(
-                                                            packetIndex,
-                                                            byte.index,
-                                                        );
-
-                                                    return (
-                                                        <Fragment
-                                                            key={byte.index}
-                                                        >
-                                                            <span
-                                                                className={
-                                                                    highlighted
-                                                                        ? "rounded-sm bg-amber-300 text-stone-900"
-                                                                        : ""
-                                                                }
-                                                                style={{
-                                                                    color: highlighted
-                                                                        ? undefined
-                                                                        : byte.color,
-                                                                }}
-                                                            >
-                                                                {byte.hex}{" "}
-                                                            </span>
-
-                                                            {(byteOffset + 1) %
-                                                                16 ===
-                                                                0 && <br />}
-                                                        </Fragment>
-                                                    );
-                                                },
-                                            )}
-                                        </pre>
-                                    </td>
-
-                                    <td className="border border-amber-300 p-3">
-                                        <h2
-                                            className={
-                                                packet.parseErrors.length > 0
-                                                    ? "mb-3 text-xl text-red-400"
-                                                    : "mb-3 text-xl text-amber-300"
-                                            }
-                                        >
-                                            {packet.title}
-                                        </h2>
-
-                                        <dl className="space-y-2">
-                                            {packet.fields.map(
-                                                (field, fieldIndex) => (
-                                                    <div
-                                                        key={`${field.group ?? ""}-${field.name}-${fieldIndex}`}
-                                                        className="rounded p-2 hover:bg-stone-800"
-                                                        onMouseEnter={() =>
-                                                            setHoveredField({
-                                                                packetIndex,
-                                                                span: field.span,
-                                                            })
-                                                        }
-                                                        onMouseLeave={() =>
-                                                            setHoveredField(
-                                                                null,
-                                                            )
-                                                        }
-                                                    >
-                                                        <dt
-                                                            className="font-semibold"
-                                                            style={{
-                                                                color: field.color,
-                                                            }}
-                                                        >
-                                                            {field.group
-                                                                ? `${field.group}.${field.name}`
-                                                                : field.name}
-                                                        </dt>
-
-                                                        <dd className="whitespace-pre-wrap break-all text-stone-300">
-                                                            {formatValue(
-                                                                field.value,
-                                                            )}
-                                                        </dd>
-                                                    </div>
-                                                ),
-                                            )}
-                                        </dl>
-
-                                        {packet.parseErrors.length > 0 && (
-                                            <ul className="mt-4 list-inside list-disc text-red-400">
-                                                {packet.parseErrors.map(
-                                                    (parseError, index) => (
-                                                        <li key={index}>
-                                                            {parseError}
-                                                        </li>
-                                                    ),
-                                                )}
-                                            </ul>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+            <div className="panel mt-5 p-5">
+                <label htmlFor="pgp-message" className="field-label">Armored OpenPGP data</label>
+                <textarea
+                    id="pgp-message"
+                    rows={10}
+                    spellCheck={false}
+                    className="field text-[0.8667rem]"
+                    value={message}
+                    placeholder={"-----BEGIN PGP MESSAGE-----"}
+                    onChange={(event) => setMessage(event.target.value)}
+                />
+                <div className="mt-4 flex flex-wrap items-center gap-4">
+                    <button type="button" className="btn btn-primary" onClick={handleDecode} disabled={!message.trim()}>
+                        Decode
+                    </button>
+                    {error && <p role="alert" className="error-text">{error}</p>}
                 </div>
-            )}
-        </div>
+            </div>
+
+            {packets.map((packet, packetIndex) => (
+                <section
+                    key={packetIndex}
+                    aria-labelledby={`packet-${packetIndex}`}
+                    className="panel mt-4 grid overflow-hidden lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)]"
+                >
+                    <div className="order-2 min-w-0 border-t border-line bg-inset p-4 lg:order-1 lg:border-t-0 lg:border-r">
+                        <pre className="overflow-x-auto font-mono text-[0.8rem] leading-[1.7]">
+                            {packet.bytes.map((byte, byteOffset) => {
+                                const highlighted = isByteHighlighted(packetIndex, byte.index);
+                                return (
+                                    <Fragment key={byte.index}>
+                                        <span
+                                            className={highlighted ? "rounded-xs bg-signal text-on-signal" : ""}
+                                            style={{ color: highlighted ? undefined : byte.color }}
+                                        >
+                                            {byte.hex}
+                                        </span>
+                                        {(byteOffset + 1) % 16 === 0 ? <br /> : " "}
+                                    </Fragment>
+                                );
+                            })}
+                        </pre>
+                    </div>
+
+                    <div className="order-1 min-w-0 p-4 lg:order-2">
+                        <h2 id={`packet-${packetIndex}`} className="font-semibold">{packet.title}</h2>
+                        <dl className="mt-3 text-sm">
+                            {packet.fields.map((field, fieldIndex) => (
+                                <div
+                                    key={`${field.group ?? ""}-${field.name}-${fieldIndex}`}
+                                    className="-mx-2 grid gap-x-4 rounded px-2 py-1 hover:bg-raised sm:grid-cols-[minmax(0,17rem)_minmax(0,1fr)]"
+                                    onMouseEnter={() => setHoveredField({ packetIndex, span: field.span })}
+                                    onMouseLeave={() => setHoveredField(null)}
+                                >
+                                    <dt className="flex min-w-0 items-baseline gap-2 text-fg-2">
+                                        <span aria-hidden="true" className="size-1.5 shrink-0 -translate-y-px rounded-full" style={{ background: field.color }} />
+                                        {/* allow line breaks only after dots */}
+                                        {(field.group ? `${field.group}.${field.name}` : field.name).replaceAll(".", ".\u200b")}
+                                    </dt>
+                                    <dd className="font-mono text-[0.8333rem] break-all whitespace-pre-wrap">{formatValue(field.value)}</dd>
+                                </div>
+                            ))}
+                        </dl>
+                        {packet.parseErrors.length > 0 && (
+                            <ul className="error-text mt-3 list-inside list-disc">
+                                {packet.parseErrors.map((parseError, index) => <li key={index}>{parseError}</li>)}
+                            </ul>
+                        )}
+                    </div>
+                </section>
+            ))}
+        </ToolPage>
     );
 }
