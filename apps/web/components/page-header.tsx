@@ -6,7 +6,7 @@ export default function PageHeader({ slug, actions }: { slug: string; actions?: 
     if (!tool) throw new Error(`Unknown tool: ${slug}`);
     return (
         <header className="flex min-h-10 flex-wrap items-center justify-between gap-3">
-            <h1 className="text-xl font-semibold tracking-tight">{tool.name}</h1>
+            <h1 className="font-display text-2xl leading-none">{tool.name}</h1>
             {actions && <div className="flex gap-2">{actions}</div>}
         </header>
     );
