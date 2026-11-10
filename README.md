@@ -115,14 +115,18 @@ cd apps/api && pytest             # API
 streaming each result as it finishes: bit planes, colour remapping, PNG repair
 (PCRT), file, ExifTool, binwalk, foremost, pngcheck, identify, steghide, zsteg
 and strings, plus OutGuess with "Deep analysis". Generated images and extracted
-archives are kept for 30 minutes, then deleted.
+archives are kept for 30 minutes (and within a 256 MiB total budget, oldest
+first), then deleted. If the browser disconnects, the API kills that analysis's
+running tools.
 
 The analyzers are adapted from [AperiSolve](https://github.com/Zeecka/AperiSolve)
 (MIT); see `apps/api/ctf_api/tools/aperisolve/NOTICE`. Not ported (yet): jsteg,
 jpseek and OpenStego, which aren't packaged for Debian, and upstream's audio
 spectrogram and PDF analyzers. Limits are set with `APERISOLVE_*` environment
 variables in `ctf_api/tools/aperisolve/` (upload size, tool timeout, image size,
-result TTL, concurrent analyses).
+result TTL, stored-results budget, concurrent analyses). The web page reads the
+upload limit from the API, but uploads above 25 MiB also need the proxy's
+`API_MAX_BODY_BYTES` raised.
 
 ## CyberChef integration
 
