@@ -7,7 +7,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
-from backend.cryptogramSolver.solver.solver import SolverConfig, SubstitutionSolver
+from ctf_api.tools.cryptogram.solver import SolverConfig, SubstitutionSolver
 
 router = APIRouter(tags=["cryptogram-solver"])
 
