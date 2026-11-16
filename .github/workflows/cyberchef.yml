@@ -1,9 +1,11 @@
 name: CyberChef integration
 
-# Slow (~14 min): Windows build, upstream tests and Playwright browser tests.
-# Only runs when something CyberChef depends on changes; ci.yml covers the rest.
+# Slow: Windows build, upstream tests and Playwright browser tests. Only runs
+# when something CyberChef depends on changes; ci.yml covers the rest (and
+# already lints and runs the integration tests on Linux).
 on:
   push:
+    branches: [main]
     paths:
       - "vendor/cyberchef/**"
       - "integration/cyberchef/**"
@@ -15,7 +17,11 @@ on:
       - "apps/web/app/layout.tsx"
       - "apps/web/app/globals.css"
       - "apps/web/components/**"
+      - "apps/web/lib/**"
       - "apps/web/next.config.ts"
+      - "apps/web/package.json"
+      - "apps/web/tsconfig.json"
+      - "apps/web/postcss.config.mjs"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/cyberchef.yml"
@@ -31,10 +37,22 @@ on:
       - "apps/web/app/layout.tsx"
       - "apps/web/app/globals.css"
       - "apps/web/components/**"
+      - "apps/web/lib/**"
       - "apps/web/next.config.ts"
+      - "apps/web/package.json"
+      - "apps/web/tsconfig.json"
+      - "apps/web/postcss.config.mjs"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/cyberchef.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -44,36 +62,48 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24.18.0
           cache: npm
           cache-dependency-path: |
             package-lock.json
             vendor/cyberchef/package-lock.json
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             .cache/cyberchef
             apps/web/public/tools/cyberchef
           key: ${{ runner.os }}-cyberchef-node24.18.0-v1-${{ hashFiles('vendor/cyberchef/**', 'integration/cyberchef/**', 'scripts/cyberchef*.mjs') }}
       - run: npm ci
-      - run: npm run test:integration
-      - run: npm run lint
+      # Linux already runs these in ci.yml; here they check the Windows path handling.
+      - name: Integration tests
+        if: runner.os == 'Windows'
+        run: npm run test:integration
+      - name: Lint
+        if: runner.os == 'Windows'
+        run: npm run lint
       - run: npm run cyberchef:setup
       - name: Upstream lint and operation tests
         if: runner.os == 'Linux'
         run: npm run cyberchef:test-upstream
       - run: npm run build
       - run: npm run cyberchef:verify
+      - name: Cache browser engines
+        if: runner.os == 'Linux'
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+      # Downloads are skipped when the cache hit; the system libraries still install.
       - name: Install browser engines
         if: runner.os == 'Linux'
         run: npx playwright install --with-deps chromium firefox
       - name: Browser integration tests
         if: runner.os == 'Linux'
         run: npm run test:browser
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure() && runner.os == 'Linux'
         with:
           name: browser-report

@@ -1,11 +1,11 @@
 """Constraint-respecting simulated annealing for substitution keys."""
 from __future__ import annotations
 
-from dataclasses import dataclass
-from math import exp
 import random
 import string
-from typing import Callable
+from collections.abc import Callable
+from dataclasses import dataclass
+from math import exp
 
 ALPHABET = string.ascii_uppercase
 
@@ -51,7 +51,7 @@ def random_key(constraints: dict[str, str], rng: random.Random, seed_key: list[s
             rng.shuffle(available)
     else:
         rng.shuffle(available)
-    for index, plain in zip(free_indices, available):
+    for index, plain in zip(free_indices, available, strict=False):
         key[index] = plain
     return [char for char in key if char is not None]
 
