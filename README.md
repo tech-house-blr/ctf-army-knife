@@ -1,13 +1,9 @@
 <div align="center">
 
-<a href="https://github.com/tech-house-blr/ctf-army-knife">
-  <img src="apps/web/app/apple-icon.png" alt="Tech House BLR" width="128" height="128">
-</a>
-
 # CTF Army Knife
 
 **A Swiss army knife for CTFs.**<br>
-Crypto, encoding and steganography tools in one self-hosted web app. Paste or drop a file to get started.
+Crypto, encoding, steganography and exploitation tools in one self-hosted web app. Paste or drop a file to get started.
 
 [![CI](https://github.com/tech-house-blr/ctf-army-knife/actions/workflows/ci.yml/badge.svg)](https://github.com/tech-house-blr/ctf-army-knife/actions/workflows/ci.yml)
 [![CyberChef integration](https://github.com/tech-house-blr/ctf-army-knife/actions/workflows/cyberchef.yml/badge.svg)](https://github.com/tech-house-blr/ctf-army-knife/actions/workflows/cyberchef.yml)
@@ -46,60 +42,18 @@ Crypto, encoding and steganography tools in one self-hosted web app. Paste or dr
 
 ## Features
 
-| Tool | What it does | Runs in |
-| ---- | ------------ | ------- |
-| **[Cryptogram Solver](apps/web/app/cryptogram-solver)** | Breaks monoalphabetic substitution ciphers with frequency analysis and simulated annealing, ranks candidates, and lets you pin known letters. | API |
-| **[GPG Decoder](apps/web/app/gpg-decoder)** | Inspects OpenPGP packets in armored or binary messages and keys, with a colour-matched hex view next to each parsed field. | Browser |
-| **[CyberChef](docs/cyberchef.md)** | The full CyberChef operation catalogue, built from pinned upstream source, themed to match, and served locally. | Browser |
-| **[AperiSolve](#aperisolve)** | Image steganography in one click: bit planes, colour remapping, PNG repair, ExifTool, binwalk, foremost, steghide, zsteg, OutGuess and more, streamed as each one finishes. | API |
-| **[Reverse Shell Generator](apps/web/app/reverse-shell)** | Reverse, bind, MSFVenom and HoaxShell payloads plus matching listeners, with IP/port/shell variables, OS filtering and URL/Base64 encoding, from a pinned revshells.com catalogue. | Browser |
-| **[GTFOBins](apps/web/app/gtfobins)** | Searchable index of Unix executables that can escape restricted shells, escalate privileges, read and write files or move data, filtered by function and by sudo, SUID or capabilities context, with attacker-side listeners and placeholder substitution, from a pinned GTFOBins snapshot. | Browser |
+Six tools behind one paste-and-go dashboard. Each has its own page; the home page suggests the right one for whatever you paste or drop.
 
-**Also:**
+| Tool | | Runs in |
+| ---- | --- | ------- |
+| **[Cryptogram Solver](apps/web/app/cryptogram-solver)** | Break substitution ciphers with frequency analysis and simulated annealing. | API |
+| **[GPG Decoder](apps/web/app/gpg-decoder)** | Inspect OpenPGP packets with a colour-matched hex view. | Browser |
+| **[CyberChef](docs/cyberchef.md)** | The full CyberChef catalogue, themed and served locally. | Browser |
+| **[AperiSolve](apps/web/app/aperisolve)** | Image steganography: bit planes, metadata and a suite of extraction tools, streamed live. | API |
+| **[Reverse Shell Generator](apps/web/app/reverse-shell)** | Reverse, bind, MSFVenom and HoaxShell payloads with matching listeners. | Browser |
+| **[GTFOBins](apps/web/app/gtfobins)** | Searchable GTFOBins index, filtered by function and privilege context. | Browser |
 
-- **Paste-and-go dashboard.** Paste text or drop a file on the home page and it suggests the right tool.
-- **Dark and light themes**, with a collapsible sidebar. Both settings are remembered without flashing on load.
-- **Sandboxed tools.** Every external program runs without a shell, with CPU, memory, file-size and time limits, in a throwaway workspace.
-- **One command to run it all:** `docker compose up --build`.
-
-<br>
-
-## Screenshots
-
-<table>
-  <tr>
-    <td width="50%">
-      <picture>
-        <source media="(prefers-color-scheme: light)" srcset="docs/assets/screenshots/cryptogram-light.png">
-        <img src="docs/assets/screenshots/cryptogram-dark.png" alt="Cryptogram Solver cracking a substitution cipher">
-      </picture>
-      <p align="center"><b>Cryptogram Solver</b><br><sub>Ranked candidates with scores, plus copy text or key</sub></p>
-    </td>
-    <td width="50%">
-      <picture>
-        <source media="(prefers-color-scheme: light)" srcset="docs/assets/screenshots/gpg-light.png">
-        <img src="docs/assets/screenshots/gpg-dark.png" alt="GPG Decoder showing parsed OpenPGP packets">
-      </picture>
-      <p align="center"><b>GPG Decoder</b><br><sub>Packet-by-packet breakdown with a matching hex view</sub></p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <picture>
-        <source media="(prefers-color-scheme: light)" srcset="docs/assets/screenshots/aperisolve-light.png">
-        <img src="docs/assets/screenshots/aperisolve-dark.png" alt="AperiSolve bit-plane analysis of an image">
-      </picture>
-      <p align="center"><b>AperiSolve</b><br><sub>Bit planes for every channel, streamed live</sub></p>
-    </td>
-    <td width="50%">
-      <picture>
-        <source media="(prefers-color-scheme: light)" srcset="docs/assets/screenshots/cyberchef-light.png">
-        <img src="docs/assets/screenshots/cyberchef-dark.png" alt="CyberChef embedded with the app theme">
-      </picture>
-      <p align="center"><b>CyberChef</b><br><sub>The full catalogue, themed and served locally</sub></p>
-    </td>
-  </tr>
-</table>
+Plus a dark/light theme with a collapsible sidebar, and sandboxing for every external program: no shell, hard CPU, memory, file-size and time limits, in a throwaway workspace.
 
 <br>
 
@@ -128,7 +82,7 @@ npm run dev:all    # API on :8000 and web app on http://localhost:4000, in one t
 `dev:all` labels each server's output and stops both on <kbd>Ctrl</kbd>+<kbd>C</kbd>. It reuses the existing CyberChef build, so run `npm run cyberchef:build` after changing `integration/cyberchef/`.
 
 > [!TIP]
-> AperiSolve's CLI tools (binwalk, zsteg, steghide, ExifTool...) are only installed in the API's Docker image. Run locally, those analyzers report "not installed". The pure-Python ones, such as bit planes and colour remapping, still work.
+> The CLI tools used by server-side tools (binwalk, zsteg, steghide, ExifTool...) are only installed in the API's Docker image. Run locally, those analyzers report "not installed"; the pure-Python ones still work. `GET /api/capabilities` reports what a given deployment has.
 
 <details>
 <summary><b>Running the servers separately</b></summary>
@@ -158,7 +112,7 @@ flowchart LR
     end
 
     subgraph api ["api container · FastAPI (read-only, tmpfs /tmp)"]
-        R["Tool routers<br/>cryptogram · aperisolve"]
+        R["Tool routers"]
         S["core/sandbox.py"]
         R --> S
     end
@@ -167,7 +121,7 @@ flowchart LR
     S --> T["binwalk · zsteg · steghide<br/>exiftool · foremost · outguess ..."]
 ```
 
-The browser only talks to the web container. The API isn't published to the host, and its tool workspaces live in a capped in-memory `tmpfs`, so an extraction bomb fails instead of filling the disk.
+Tools are either **browser-only** (all logic ships to the client) or **API-backed** (they call the FastAPI backend). The browser only ever talks to the web container; the API isn't published to the host, and its tool workspaces live in a capped in-memory `tmpfs`, so an extraction bomb fails instead of filling the disk.
 
 <details>
 <summary><b>Repository layout</b></summary>
@@ -184,8 +138,8 @@ apps/
     ctf_api/main.py       wires tool routers together
     ctf_api/tools/<tool>/ server-side logic for a tool (e.g. cryptogram/)
     tests/
-vendor/cyberchef/         pinned upstream CyberChef source (git subtree)
-integration/cyberchef/    our theme, bridge and build patches for CyberChef
+vendor/                   pinned upstream sources (CyberChef, revshells, GTFOBins)
+integration/              our themes, bridges and build patches for vendored code
 scripts/                  CyberChef build tooling; setup, dev:all and test:api helpers
 tests/
   web/                    unit tests for client-side tool logic
@@ -224,7 +178,9 @@ async def analyze(file: UploadFile):
     return result.to_dict()                       # missing tool / timeout reported, not raised
 ```
 
-`run_tool` runs without a shell, kills the whole process tree on timeout, caps CPU, memory and file size, truncates output, and hides server environment variables. Register new executables in `ctf_api/core/external_tools.py` and install them in `apps/api/Dockerfile`. `GET /api/capabilities` reports which ones a deployment has.
+`run_tool` runs without a shell, kills the whole process tree on timeout, caps CPU, memory and file size, truncates output, and hides server environment variables. Register new executables in `ctf_api/core/external_tools.py` and install them in `apps/api/Dockerfile`.
+
+Vendored data (CyberChef, the reverse-shell and GTFOBins catalogues) is pinned under `vendor/` and regenerated by the scripts in `scripts/`; see the `NOTICE` beside each one.
 
 <br>
 
@@ -238,29 +194,7 @@ async def analyze(file: UploadFile):
 | `npm run test:browser` | Playwright end-to-end tests (needs `npx playwright install`) |
 | `npm run test:api` | API, in its virtualenv (tool tests skip if a tool isn't installed) |
 
-CI runs on every pull request and on pushes to `main`: ESLint and Ruff, unit, integration and build checks, the API tests both on a plain runner and inside the real read-only API image, and a `docker compose` smoke test of both production images. The slower CyberChef suite (Windows build, upstream tests, browser tests) only runs when its inputs change. CodeQL and a dependency audit (`npm audit`, `pip-audit`) run on PRs and weekly, and Dependabot keeps actions, npm, pip and Docker base images up to date.
-
-<br>
-
-## AperiSolve
-
-`/aperisolve` takes an upload and runs every applicable analyzer in parallel, streaming each result as it finishes:
-
-> bit planes · colour remapping · PNG repair (PCRT) · file · ExifTool · binwalk · foremost · pngcheck · identify · steghide · zsteg · strings · OutGuess (with "Deep analysis")
-
-Generated images and extracted archives are kept for 30 minutes, within a 256 MiB total budget (oldest deleted first). If the browser disconnects, the API kills that analysis's running tools.
-
-<details>
-<summary><b>Limits, configuration and what's not ported yet</b></summary>
-<br>
-
-Limits are set with `APERISOLVE_*` environment variables in `ctf_api/tools/aperisolve/`: upload size, tool timeout, image size, result TTL, stored-results budget and concurrent analyses. The web page reads the upload limit from the API, but uploads above 25 MiB also need the proxy's `API_MAX_BODY_BYTES` raised.
-
-**Not ported (yet):** jsteg, jpseek and OpenStego, which aren't packaged for Debian, and upstream's audio spectrogram and PDF analyzers.
-
-</details>
-
-The analyzers are adapted from [AperiSolve](https://github.com/Zeecka/AperiSolve) (MIT); see [`NOTICE`](apps/api/ctf_api/tools/aperisolve/NOTICE).
+CI runs on every pull request and on pushes to `main`: ESLint and Ruff, unit, integration and build checks, the API tests both on a plain runner and inside the real read-only API image, a `docker compose` smoke test of both production images, and `reuse lint` for licence coverage. The slower CyberChef suite (Windows build, upstream tests, browser tests) only runs when its inputs change. CodeQL and a dependency audit (`npm audit`, `pip-audit`) run on PRs and weekly, and Dependabot keeps actions, npm, pip and Docker base images up to date.
 
 <br>
 
@@ -284,23 +218,7 @@ Bundled third-party components keep their own licences, all of which are compati
 | GTFOBins catalogue in `vendor/gtfobins/` (and the generated `apps/web/lib/tools/gtfobins/data.generated.ts`) | GPL-3.0, © GTFOBins contributors ([NOTICE](integration/gtfobins/NOTICE)) |
 | Fonts in `apps/web/public/fonts/` | SIL Open Font License 1.1 |
 
-The Tech House BLR brand assets in `apps/web/public/brand/techhouse-*` and the favicons (`apps/web/app/icon.png`, `apps/web/app/apple-icon.png`) are **not** covered by the GPL: they are CC BY-NC-ND 4.0, © Tech House BLR (see below). They are shipped alongside the code but are not part of the licensed work.
-
-<details>
-<summary><b>Tech House BLR brand assets</b></summary>
-<br>
-
-The interface carries the Tech House BLR logo: the original brand images from the Tech House website, trimmed and exported at their display sizes in `apps/web/public/brand` (used by `apps/web/components/brand.tsx`), and the Tech House favicon and Apple touch icon, unmodified from the Tech House website (`apps/web/app/icon.png`, `apps/web/app/apple-icon.png`). The Tech House brand assets are **CC BY-NC-ND 4.0** and belong to Tech House BLR. They are not covered by this repository's code licence, so don't reuse or modify them outside this project without permission.
-
-</details>
-
-<details>
-<summary><b>Fonts</b></summary>
-<br>
-
-Fonts in `apps/web/public/fonts` are under the SIL Open Font License (see the `OFL-*.txt` files beside them): IBM Plex Sans and Mono for the interface, and BBH Hegarty, the Tech House display face, for names and titles.
-
-</details>
+The Tech House BLR brand assets in `apps/web/public/brand/techhouse-*` and the favicons (`apps/web/app/icon.png`, `apps/web/app/apple-icon.png`) are **not** covered by the GPL: they are CC BY-NC-ND 4.0, © Tech House BLR. They are shipped alongside the code but are not part of the licensed work, so don't reuse or modify them outside this project without permission.
 
 **Built on the shoulders of:** [CyberChef](https://github.com/gchq/CyberChef) by GCHQ · [AperiSolve](https://github.com/Zeecka/AperiSolve) by Zeecka · [Reverse Shell Generator](https://github.com/0dayCTF/reverse-shell-generator) by Ryan Montgomery · [GTFOBins](https://github.com/GTFOBins/GTFOBins.github.io)
 
