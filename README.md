@@ -284,13 +284,13 @@ Bundled third-party components keep their own licences, all of which are compati
 | GTFOBins catalogue in `vendor/gtfobins/` (and the generated `apps/web/lib/tools/gtfobins/data.generated.ts`) | GPL-3.0, © GTFOBins contributors ([NOTICE](integration/gtfobins/NOTICE)) |
 | Fonts in `apps/web/public/fonts/` | SIL Open Font License 1.1 |
 
-The Tech House BLR brand assets in `apps/web/public/brand/techhouse-*` are **not** covered by the GPL: they are CC BY-NC-ND 4.0, © Tech House BLR (see below). They are shipped alongside the code but are not part of the licensed work.
+The Tech House BLR brand assets in `apps/web/public/brand/techhouse-*` and the favicons (`apps/web/app/icon.png`, `apps/web/app/apple-icon.png`) are **not** covered by the GPL: they are CC BY-NC-ND 4.0, © Tech House BLR (see below). They are shipped alongside the code but are not part of the licensed work.
 
 <details>
 <summary><b>Tech House BLR brand assets</b></summary>
 <br>
 
-The interface carries the Tech House BLR logo: the original brand images from the Tech House website, trimmed and exported at their display sizes in `apps/web/public/brand` (used by `apps/web/components/brand.tsx`), and the mark as the favicon (`apps/web/app/icon.png`). The Tech House brand assets are **CC BY-NC-ND 4.0** and belong to Tech House BLR. They are not covered by this repository's code licence, so don't reuse or modify them outside this project without permission.
+The interface carries the Tech House BLR logo: the original brand images from the Tech House website, trimmed and exported at their display sizes in `apps/web/public/brand` (used by `apps/web/components/brand.tsx`), and the Tech House favicon and Apple touch icon, unmodified from the Tech House website (`apps/web/app/icon.png`, `apps/web/app/apple-icon.png`). The Tech House brand assets are **CC BY-NC-ND 4.0** and belong to Tech House BLR. They are not covered by this repository's code licence, so don't reuse or modify them outside this project without permission.
 
 </details>
 
