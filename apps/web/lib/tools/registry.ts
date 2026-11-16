@@ -67,6 +67,15 @@ export const tools: readonly Tool[] = [
         category: "exploitation",
         status: "ready",
     },
+    {
+        slug: "gtfobins",
+        name: "GTFOBins",
+        title: "GTFOBins",
+        icon: "unlock",
+        description: "Look up Unix executables that can escape restricted shells, escalate privileges or move files.",
+        category: "exploitation",
+        status: "ready",
+    },
 ];
 
 export const toolHref = (tool: Tool) => `/${tool.slug}`;
