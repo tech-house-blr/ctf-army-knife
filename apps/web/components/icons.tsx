@@ -13,6 +13,8 @@ const paths = {
     chef: "M7 17.5h10 M7 17.5V20h10v-2.5 M7 17.5v-4.1A4 4 0 0 1 8.2 5.6 4.5 4.5 0 0 1 15.8 5.6 4 4 0 0 1 17 13.4v4.1",
     /** AperiSolve: stacked bit planes. */
     layers: "M12 4 3.5 8.5 12 13l8.5-4.5z M3.5 12.5 12 17l8.5-4.5 M3.5 16.5 12 21l8.5-4.5",
+    /** Reverse Shell Generator: a terminal with a prompt. */
+    terminal: "M3.5 5h17a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-17a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z M6.5 9.5l3 2.5-3 2.5 M12.5 15h5",
     /** Sidebar: collapse / expand. */
     sidebar: "M4 5h16v14H4z M9.5 5v14",
     theme: "M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17z M12 3.5v17",

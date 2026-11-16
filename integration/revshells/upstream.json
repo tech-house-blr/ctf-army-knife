@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/0dayCTF/reverse-shell-generator.git",
+  "commit": "9fda27f91b1b1f370539dd534bc3bbb1f6b49bf6",
+  "retrieved": "2026-11-16",
+  "source": "js/data.js",
+  "license": "MIT"
+}
