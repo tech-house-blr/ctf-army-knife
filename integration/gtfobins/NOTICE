@@ -1,0 +1,22 @@
+CTF Army Knife GTFOBins integration
+
+Includes the executable catalogue from GTFOBins (https://gtfobins.org),
+curated by the GTFOBins project and its contributors.
+GTFOBins is licensed under the GNU General Public License, version 3.
+https://github.com/GTFOBins/GTFOBins.github.io
+
+vendor/gtfobins/ is a pinned, unmodified copy of the upstream _gtfobins/
+entries and the _data/functions.yml and _data/contexts.yml definitions (see
+integration/gtfobins/upstream.json for the exact commit).
+apps/web/lib/tools/gtfobins/data.generated.ts is derived from them by
+scripts/gtfobins.mjs; entry text and code are preserved verbatim.
+
+Community modifications: the search and browsing interface is reimplemented in
+the CTF Army Knife design system, with optional placeholder substitution for
+hosts, ports and file paths. These modifications do not imply any endorsement
+by the original authors.
+
+The upstream GPL-3.0 LICENSE accompanies this distribution at
+vendor/gtfobins/LICENSE. Because CTF Army Knife bundles this data, the
+project as a whole is distributed under GPL-3.0 (see the LICENSE file at the
+repository root).
