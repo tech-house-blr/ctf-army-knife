@@ -4,7 +4,7 @@
 # CyberChef only depends on its own inputs, so this stage stays cached until
 # vendor/, integration/ or its build scripts change. Editing the app (or the
 # other developer scripts) never rebuilds it.
-FROM node:24-bookworm AS cyberchef
+FROM node:26-bookworm AS cyberchef
 WORKDIR /app
 ENV NODE_OPTIONS=--max-old-space-size=8192
 COPY package.json ./
@@ -14,7 +14,7 @@ COPY vendor vendor
 RUN npm run cyberchef:build
 
 
-FROM node:24-bookworm AS build
+FROM node:26-bookworm AS build
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 
@@ -29,7 +29,7 @@ COPY --from=cyberchef /app/apps/web/public/tools/cyberchef apps/web/public/tools
 RUN npm run build -w @ctf-army-knife/web && npm prune --omit=dev
 
 
-FROM node:24-bookworm-slim AS runtime
+FROM node:26-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 \
     # Where the /api proxy forwards to; read per request, so override at runtime.
