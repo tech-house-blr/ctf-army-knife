@@ -272,9 +272,9 @@ CyberChef is built from a pinned upstream source subtree with a community theme,
 
 ## Branding, credits and licences
 
-CTF Army Knife is released under the [GNU General Public License v3.0](LICENSE). It bundles the [GTFOBins](https://github.com/GTFOBins/GTFOBins.github.io) catalogue, which is GPL-3.0, so the combined work is distributed under GPL-3.0 too. Earlier versions were released under the MIT License; that text is kept in [LICENSE-MIT](LICENSE-MIT) and still applies to code that was contributed under it.
+CTF Army Knife is released under the [GNU General Public License v3.0](LICENSE). It bundles the [GTFOBins](https://github.com/GTFOBins/GTFOBins.github.io) catalogue, which is GPL-3.0, so the combined work is distributed under GPL-3.0 too. Earlier versions were released under the MIT License; that text is kept in [LICENSES/MIT.txt](LICENSES/MIT.txt), and the notice (copyright 2026 Tech House BLR and contributors) is preserved for code contributed under it. Contributions are accepted under GPL-3.0-only.
 
-Bundled third-party components keep their own licences, all of which are compatible with GPL-3.0:
+Bundled third-party components keep their own licences, all of which are compatible with GPL-3.0. [`REUSE.toml`](REUSE.toml) maps every path to its licence and copyright holder, the licence texts are in [`LICENSES/`](LICENSES), and CI runs `reuse lint` so a file without a declared licence fails the build.
 
 | Path | Licence |
 | ---- | ------- |
