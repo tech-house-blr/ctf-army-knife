@@ -18,6 +18,13 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # Every file must have a declared licence and copyright holder (REUSE.toml).
+  reuse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: pipx run 'reuse==6.3.0' lint
+
   web:
     runs-on: ubuntu-latest
     steps:

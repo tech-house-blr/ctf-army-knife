@@ -1,0 +1,63 @@
+version = 1
+
+# Licensing map for the whole repository, following https://reuse.software.
+# The project as a whole is GPL-3.0-only because it bundles GPL-3.0 GTFOBins
+# data. Third-party components keep their own licences, listed below. The
+# licence texts live in LICENSES/ and are checked by `reuse lint` in CI.
+#
+# Entries later in the file win over earlier ones (precedence = "override").
+
+# Everything not listed below.
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Tech House BLR and contributors"
+SPDX-License-Identifier = "GPL-3.0-only"
+
+# CyberChef, a pinned upstream subtree.
+[[annotations]]
+path = "vendor/cyberchef/**"
+precedence = "override"
+SPDX-FileCopyrightText = "Crown Copyright 2016 GCHQ"
+SPDX-License-Identifier = "Apache-2.0"
+
+# Reverse Shell Generator catalogue and the module generated from it.
+[[annotations]]
+path = ["vendor/revshells/**", "apps/web/lib/tools/revshells/payloads.generated.ts"]
+precedence = "override"
+SPDX-FileCopyrightText = "2022 Ryan Montgomery"
+SPDX-License-Identifier = "MIT"
+
+# GTFOBins catalogue and the module generated from it.
+[[annotations]]
+path = ["vendor/gtfobins/**", "apps/web/lib/tools/gtfobins/data.generated.ts"]
+precedence = "override"
+SPDX-FileCopyrightText = "GTFOBins contributors"
+SPDX-License-Identifier = "GPL-3.0-only"
+
+# Code adapted from AperiSolve.
+[[annotations]]
+path = "apps/api/ctf_api/tools/aperisolve/**"
+precedence = "override"
+SPDX-FileCopyrightText = ["2026 Zeecka", "2026 Tech House BLR and contributors"]
+SPDX-License-Identifier = "MIT"
+
+# Fonts, under the SIL Open Font License 1.1.
+[[annotations]]
+path = ["apps/web/public/fonts/ibm-plex-*", "apps/web/public/fonts/OFL-IBM-Plex-*.txt"]
+precedence = "override"
+SPDX-FileCopyrightText = "IBM Corp."
+SPDX-License-Identifier = "OFL-1.1"
+
+[[annotations]]
+path = ["apps/web/public/fonts/bbh-hegarty.ttf", "apps/web/public/fonts/OFL-BBH-Hegarty.txt"]
+precedence = "override"
+SPDX-FileCopyrightText = "2025 The BBH Project Authors"
+SPDX-License-Identifier = "OFL-1.1"
+
+# Tech House BLR brand assets are NOT part of the GPL grant: CC BY-NC-ND 4.0.
+[[annotations]]
+path = "apps/web/public/brand/techhouse-*"
+precedence = "override"
+SPDX-FileCopyrightText = "Tech House BLR"
+SPDX-License-Identifier = "CC-BY-NC-ND-4.0"
