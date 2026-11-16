@@ -237,7 +237,7 @@ async def analyze(file: UploadFile):
 | `npm run test:browser` | Playwright end-to-end tests (needs `npx playwright install`) |
 | `npm run test:api` | API, in its virtualenv (tool tests skip if a tool isn't installed) |
 
-CI runs lint, unit, integration and build checks on every push, plus the API tests both on a plain runner and inside the real read-only API image. The slower CyberChef suite (Windows build, upstream tests, browser tests) only runs when its inputs change.
+CI runs on every pull request and on pushes to `main`: ESLint and Ruff, unit, integration and build checks, the API tests both on a plain runner and inside the real read-only API image, and a `docker compose` smoke test of both production images. The slower CyberChef suite (Windows build, upstream tests, browser tests) only runs when its inputs change. CodeQL and a dependency audit (`npm audit`, `pip-audit`) run on PRs and weekly, and Dependabot keeps actions, npm, pip and Docker base images up to date.
 
 <br>
 

@@ -1,0 +1,37 @@
+version: 2
+
+# Weekly, grouped so each ecosystem opens at most one PR for minor/patch bumps.
+# vendor/cyberchef is upstream code imported with `npm run cyberchef:import`,
+# so it is deliberately left out.
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Root workspace lockfile; covers apps/web too.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: pip
+    directory: /apps/api
+    schedule:
+      interval: weekly
+    groups:
+      pip-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directories:
+      - /apps/api
+      - /apps/web
+    schedule:
+      interval: weekly
