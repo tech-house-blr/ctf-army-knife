@@ -191,7 +191,7 @@ export default function ReverseShellGenerator() {
             </div>
 
             {/* Payload list + generated command */}
-            <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,19rem)_1fr]">
+            <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
                 <ul className="panel max-h-[28rem] overflow-y-auto p-1.5">
                     {commandList.length === 0 ? (
                         <li className="px-3 py-2 text-[0.875rem] text-fg-3">No commands for this filter.</li>
@@ -218,12 +218,12 @@ export default function ReverseShellGenerator() {
                     )}
                 </ul>
 
-                <section className="panel flex min-h-[12rem] flex-col p-4">
+                <section className="panel flex min-h-[12rem] min-w-0 flex-col p-4">
                     <div className="flex items-center justify-between gap-3">
                         <h2 className="truncate font-display text-lg">{selected?.name ?? "—"}</h2>
                         <CopyButton text={output} disabled={!output} />
                     </div>
-                    <pre className="mt-3 flex-1 overflow-auto rounded-md bg-inset p-3 font-mono text-[0.85rem] leading-relaxed whitespace-pre-wrap text-fg">
+                    <pre className="mt-3 max-h-[28rem] flex-1 overflow-auto rounded-md bg-inset p-3 font-mono text-[0.85rem] leading-relaxed whitespace-pre-wrap break-words text-fg">
                         {output || "Select a payload."}
                     </pre>
                 </section>
