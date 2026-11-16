@@ -1,12 +1,10 @@
 """Offline, composable English-language scoring."""
 from __future__ import annotations
 
-from collections import Counter
-from functools import lru_cache
 import json
-from math import log
-from pathlib import Path
 import re
+from functools import lru_cache
+from pathlib import Path
 
 from .dictionary import dictionary_score, load_words
 

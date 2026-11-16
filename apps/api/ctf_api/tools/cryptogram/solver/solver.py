@@ -1,10 +1,10 @@
 """Public orchestration layer for the monoalphabetic substitution solver."""
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
 import random
 import re
 import string
+from dataclasses import dataclass
 from typing import Any
 
 from .annealing import AnnealResult, anneal, decrypt, validate_constraints
@@ -42,7 +42,7 @@ def _compatible_key(key: list[str], constraints: dict[str, str]) -> bool:
 def _merge_mapping(mapping: dict[str, str], cipher_word: str, plain_word: str) -> dict[str, str] | None:
     candidate = mapping.copy()
     reverse = {plain: cipher for cipher, plain in candidate.items()}
-    for cipher, plain in zip(cipher_word, plain_word):
+    for cipher, plain in zip(cipher_word, plain_word, strict=False):
         if cipher in candidate and candidate[cipher] != plain:
             return None
         if plain in reverse and reverse[plain] != cipher:

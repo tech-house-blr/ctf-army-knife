@@ -1,9 +1,9 @@
 """Bundled dictionary loading and word-level scoring."""
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 from pathlib import Path
-import re
 
 from .patterns import build_pattern_index
 
