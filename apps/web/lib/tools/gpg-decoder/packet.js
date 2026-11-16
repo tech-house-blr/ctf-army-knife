@@ -1299,12 +1299,7 @@ export class Packet {
         }
     }
 
-    parseSecretKeyAndChecksumEncrypted(
-        keyAlgorithm,
-        s2kUsage,
-        s2kEncryption,
-        s2kSpecifier,
-    ) {
+    parseSecretKeyAndChecksumEncrypted(keyAlgorithm, s2kUsage) {
         // we aren't doing the crypto operations to get the secret key in cleartext,
         // so we will just report them as-is with '_encrypted' as part of their component names.
 
@@ -1493,8 +1488,6 @@ export class Packet {
             );
             return;
         }
-
-        let remainingLength = s2kSpecifierLength;
 
         switch (subpacket.specifierType.id) {
             case 0: // Simple S2K
