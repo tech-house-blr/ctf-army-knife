@@ -15,6 +15,8 @@ const paths = {
     layers: "M12 4 3.5 8.5 12 13l8.5-4.5z M3.5 12.5 12 17l8.5-4.5 M3.5 16.5 12 21l8.5-4.5",
     /** Reverse Shell Generator: a terminal with a prompt. */
     terminal: "M3.5 5h17a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-17a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z M6.5 9.5l3 2.5-3 2.5 M12.5 15h5",
+    /** GTFOBins: an open padlock (bypassing local restrictions). */
+    unlock: "M6 11h12v9H6z M8.5 11V8a3.5 3.5 0 0 1 6.8-1.2 M12 14.5v2",
     /** Sidebar: collapse / expand. */
     sidebar: "M4 5h16v14H4z M9.5 5v14",
     theme: "M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17z M12 3.5v17",

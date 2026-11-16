@@ -1,6 +1,7 @@
 {
     "name": "ctf-army-knife",
     "version": "0.1.0",
+    "license": "GPL-3.0-only",
     "private": true,
     "workspaces": [
         "apps/web"
@@ -31,7 +32,8 @@
     "devDependencies": {
         "@playwright/test": "1.63.0",
         "eslint": "^9",
-        "eslint-config-next": "16.3.4"
+        "eslint-config-next": "16.3.4",
+        "js-yaml": "^4.3.2"
     },
     "overrides": {
         "@typescript-eslint/typescript-estree": {
