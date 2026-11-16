@@ -6,21 +6,7 @@
 Crypto, encoding, steganography and exploitation tools in one self-hosted web app. Paste or drop a file to get started.
 
 [![CI](https://github.com/tech-house-blr/ctf-army-knife/actions/workflows/ci.yml/badge.svg)](https://github.com/tech-house-blr/ctf-army-knife/actions/workflows/ci.yml)
-[![CyberChef integration](https://github.com/tech-house-blr/ctf-army-knife/actions/workflows/cyberchef.yml/badge.svg)](https://github.com/tech-house-blr/ctf-army-knife/actions/workflows/cyberchef.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-39d353)](LICENSE)
-![Version](https://img.shields.io/badge/version-0.1.0-39d353)
-![PRs welcome](https://img.shields.io/badge/PRs-welcome-39d353)
-
-[![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org)
-[![React](https://img.shields.io/badge/React-19-087ea4?style=for-the-badge&logo=react&logoColor=white)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06b6d4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-<br>
-[![Node.js](https://img.shields.io/badge/Node.js-24-5fa04e?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org)
-[![Python](https://img.shields.io/badge/Python-3.12+-3776ab?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Docker](https://img.shields.io/badge/Docker-ready-2496ed?style=for-the-badge&logo=docker&logoColor=white)](#docker)
-[![CyberChef](https://img.shields.io/badge/CyberChef-11.5-6b7280?style=for-the-badge)](https://github.com/gchq/CyberChef)
 
 [**Features**](#features) ·
 [**Quick start**](#quick-start) ·
