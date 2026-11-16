@@ -61,3 +61,10 @@ path = ["apps/web/public/brand/techhouse-*", "apps/web/app/icon.png", "apps/web/
 precedence = "override"
 SPDX-FileCopyrightText = "Tech House BLR"
 SPDX-License-Identifier = "CC-BY-NC-ND-4.0"
+
+# The Code of Conduct is the Contributor Covenant, which is itself CC-BY-4.0.
+[[annotations]]
+path = "CODE_OF_CONDUCT.md"
+precedence = "override"
+SPDX-FileCopyrightText = "2014 Coraline Ada Ehmke and the Contributor Covenant contributors"
+SPDX-License-Identifier = "CC-BY-4.0"
