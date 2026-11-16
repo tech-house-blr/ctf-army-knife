@@ -52,6 +52,7 @@ Crypto, encoding and steganography tools in one self-hosted web app. Paste or dr
 | **[GPG Decoder](apps/web/app/gpg-decoder)** | Inspects OpenPGP packets in armored or binary messages and keys, with a colour-matched hex view next to each parsed field. | Browser |
 | **[CyberChef](docs/cyberchef.md)** | The full CyberChef operation catalogue, built from pinned upstream source, themed to match, and served locally. | Browser |
 | **[AperiSolve](#aperisolve)** | Image steganography in one click: bit planes, colour remapping, PNG repair, ExifTool, binwalk, foremost, steghide, zsteg, OutGuess and more, streamed as each one finishes. | API |
+| **[Reverse Shell Generator](apps/web/app/reverse-shell)** | Reverse, bind, MSFVenom and HoaxShell payloads plus matching listeners, with IP/port/shell variables, OS filtering and URL/Base64 encoding, from a pinned revshells.com catalogue. | Browser |
 
 **Also:**
 
@@ -276,6 +277,7 @@ The code in this repository is released under the [MIT License](LICENSE), with t
 | ---- | ------- |
 | `vendor/cyberchef/` | Apache-2.0, © Crown Copyright ([LICENSE](vendor/cyberchef/LICENSE)) |
 | Code adapted from AperiSolve in `apps/api/ctf_api/tools/aperisolve/` | MIT, © Zeecka ([NOTICE](apps/api/ctf_api/tools/aperisolve/NOTICE)) |
+| Reverse-shell catalogue in `vendor/revshells/` (and the generated `apps/web/lib/tools/revshells/payloads.generated.ts`) | MIT, © Ryan Montgomery ([NOTICE](integration/revshells/NOTICE)) |
 | Tech House BLR brand assets in `apps/web/public/brand/techhouse-*` | CC BY-NC-ND 4.0, © Tech House BLR (see below) |
 | Fonts in `apps/web/public/fonts/` | SIL Open Font License 1.1 |
 
@@ -295,7 +297,7 @@ Fonts in `apps/web/public/fonts` are under the SIL Open Font License (see the `O
 
 </details>
 
-**Built on the shoulders of:** [CyberChef](https://github.com/gchq/CyberChef) by GCHQ · [AperiSolve](https://github.com/Zeecka/AperiSolve) by Zeecka
+**Built on the shoulders of:** [CyberChef](https://github.com/gchq/CyberChef) by GCHQ · [AperiSolve](https://github.com/Zeecka/AperiSolve) by Zeecka · [Reverse Shell Generator](https://github.com/0dayCTF/reverse-shell-generator) by Ryan Montgomery
 
 <br>
 

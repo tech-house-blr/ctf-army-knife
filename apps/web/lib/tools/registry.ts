@@ -13,7 +13,7 @@ export type Tool = {
     title: string;
     icon: IconName;
     description: string;
-    category: "crypto" | "encoding" | "forensics" | "stego";
+    category: "crypto" | "encoding" | "forensics" | "stego" | "exploitation";
     status: "ready" | "planned";
     /** True when the tool calls the Python API in apps/api. */
     needsApi?: boolean;
@@ -58,6 +58,15 @@ export const tools: readonly Tool[] = [
         category: "crypto",
         status: "ready",
     },
+    {
+        slug: "reverse-shell",
+        name: "Reverse Shell Generator",
+        title: "Rev Shell",
+        icon: "terminal",
+        description: "Build reverse, bind and MSFVenom shells plus matching listeners, with URL/Base64 encoding.",
+        category: "exploitation",
+        status: "ready",
+    },
 ];
 
 export const toolHref = (tool: Tool) => `/${tool.slug}`;
@@ -68,6 +77,7 @@ export const categories: readonly { id: Tool["category"]; label: string }[] = [
     { id: "encoding", label: "Encoding" },
     { id: "stego", label: "Steganography" },
     { id: "forensics", label: "Forensics" },
+    { id: "exploitation", label: "Exploitation" },
 ];
 
 /** Categories that have at least one tool, each with its tools. */

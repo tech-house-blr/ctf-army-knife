@@ -1,0 +1,22 @@
+CTF Army Knife Reverse Shell Generator integration
+
+Includes payload and listener data from the Reverse Shell Generator
+(revshells.com), originally developed by Ryan Montgomery (0dayCTF) and
+contributors.
+Reverse Shell Generator: Copyright (c) 2022 Ryan Montgomery, licensed under
+the MIT License.
+https://github.com/0dayCTF/reverse-shell-generator
+
+The command catalogue in vendor/revshells/data.js is a pinned, unmodified
+snapshot of the upstream js/data.js (see integration/revshells/upstream.json
+for the exact commit). apps/web/lib/tools/revshells/payloads.generated.ts is
+derived from it by scripts/revshells.mjs; the original command strings are
+preserved verbatim.
+
+Community modifications: the user interface is reimplemented in the CTF Army
+Knife design system. The variable-substitution, encoding and OS-filtering
+behaviour follows the upstream tool. These modifications do not imply any
+endorsement by the original authors.
+
+The upstream MIT LICENSE accompanies this distribution at
+vendor/revshells/LICENSE.
