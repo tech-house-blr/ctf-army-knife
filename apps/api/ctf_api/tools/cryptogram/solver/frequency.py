@@ -1,8 +1,8 @@
 """Lightweight frequency analysis for sensible annealing starting keys."""
 from __future__ import annotations
 
-from collections import Counter
 import string
+from collections import Counter
 
 ENGLISH_FREQUENCY = "ETAOINSHRDLCUMWFGYPBVKJXQZ"
 ALPHABET = string.ascii_uppercase

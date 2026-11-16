@@ -1,17 +1,28 @@
 name: CI
 
-# Runs on every push. The slow CyberChef suite (Windows, upstream tests,
-# browser tests) lives in cyberchef.yml and only runs when its inputs change.
+# Runs on every PR and on pushes to main. The slow CyberChef suite (Windows,
+# upstream tests, browser tests) lives in cyberchef.yml and only runs when its
+# inputs change.
 on:
   push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A new push to a PR supersedes the run in progress; runs on main always finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   web:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24.18.0
           cache: npm
@@ -20,7 +31,7 @@ jobs:
             vendor/cyberchef/package-lock.json
       # Same key as cyberchef.yml, so the CyberChef bundle is normally restored
       # instead of rebuilt; npm run build only rebuilds it on a cache miss.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             .cache/cyberchef
@@ -38,13 +49,14 @@ jobs:
       run:
         working-directory: apps/api
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: pip
           cache-dependency-path: apps/api/requirements*.txt
       - run: pip install -r requirements-dev.txt
+      - run: ruff check --output-format github
       - run: pytest
 
   # Tests that need steghide, zsteg, binwalk etc. skip on the plain runner above;
@@ -52,11 +64,54 @@ jobs:
   api-image:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: docker build -t ctf-army-knife-api apps/api
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: apps/api
+          tags: ctf-army-knife-api
+          load: true
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
       - name: Run API tests inside the image
         run: |
           docker run --rm -u root \
             -v "$PWD/apps/api/tests:/app/tests:ro" -v "$PWD/apps/api/pytest.ini:/app/pytest.ini:ro" \
+            -v "$PWD/apps/api/requirements-dev.txt:/app/requirements-dev.txt:ro" \
             ctf-army-knife-api sh -c \
-            "pip install -q --root-user-action=ignore pytest httpx && su api -s /bin/sh -c 'cd /app && python -m pytest -rs'"
+            "pip install -q --root-user-action=ignore -r requirements-dev.txt && su api -s /bin/sh -c 'cd /app && python -m pytest -rs'"
+
+  # Builds both production images and boots the stack the way the README tells
+  # people to (docker compose up), then checks the pages and the /api proxy.
+  compose:
+    runs-on: ubuntu-latest
+    env:
+      COMPOSE_PROJECT_NAME: ctf-army-knife
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker compose config --quiet
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: apps/api
+          tags: ctf-army-knife-api
+          load: true
+          cache-from: type=gha,scope=api
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          tags: ctf-army-knife-web
+          load: true
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+      - run: docker compose up --detach --no-build --wait --wait-timeout 120
+      - name: Smoke test
+        run: |
+          for path in / /cyberchef /tools/cyberchef/manifest.json /api/health; do
+            curl --fail --silent --show-error --retry 10 --retry-delay 3 --retry-all-errors \
+              --output /dev/null --write-out "%{http_code} $path\n" "http://localhost:4000$path"
+          done
+      - name: Container logs
+        if: failure()
+        run: docker compose logs

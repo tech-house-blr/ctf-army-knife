@@ -1,0 +1,38 @@
+name: Dependency audit
+
+# Fails when a dependency has a known vulnerability. Runs when the dependency
+# lists change, and weekly so newly published advisories are caught too.
+on:
+  push:
+    branches: [main]
+    paths: &deps
+      - "package-lock.json"
+      - "apps/api/requirements*.txt"
+      - ".github/workflows/audit.yml"
+  pull_request:
+    paths: *deps
+  schedule:
+    - cron: "41 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  npm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.18.0
+      - run: npm audit --audit-level=moderate
+
+  pip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: pipx run pip-audit --requirement apps/api/requirements-dev.txt
