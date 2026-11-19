@@ -76,6 +76,15 @@ export const tools: readonly Tool[] = [
         category: "exploitation",
         status: "ready",
     },
+    {
+        slug: "lolbas",
+        name: "LOLBAS",
+        title: "LOLBAS",
+        icon: "window",
+        description: "Look up Windows binaries, scripts and libraries that can execute code, download files or bypass defences.",
+        category: "exploitation",
+        status: "ready",
+    },
 ];
 
 export const toolHref = (tool: Tool) => `/${tool.slug}`;

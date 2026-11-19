@@ -2,8 +2,9 @@ version = 1
 
 # Licensing map for the whole repository, following https://reuse.software.
 # The project as a whole is GPL-3.0-only because it bundles GPL-3.0 GTFOBins
-# data. Third-party components keep their own licences, listed below. The
-# licence texts live in LICENSES/ and are checked by `reuse lint` in CI.
+# and LOLBAS data. Third-party components keep their own licences, listed
+# below. The licence texts live in LICENSES/ and are checked by `reuse lint`
+# in CI.
 #
 # Entries later in the file win over earlier ones (precedence = "override").
 
@@ -33,6 +34,13 @@ SPDX-License-Identifier = "MIT"
 path = ["vendor/gtfobins/**", "apps/web/lib/tools/gtfobins/data.generated.ts"]
 precedence = "override"
 SPDX-FileCopyrightText = "GTFOBins contributors"
+SPDX-License-Identifier = "GPL-3.0-only"
+
+# LOLBAS catalogue and the module generated from it.
+[[annotations]]
+path = ["vendor/lolbas/**", "apps/web/lib/tools/lolbas/data.generated.ts"]
+precedence = "override"
+SPDX-FileCopyrightText = "LOLBAS Project contributors"
 SPDX-License-Identifier = "GPL-3.0-only"
 
 # Code adapted from AperiSolve.

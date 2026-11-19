@@ -1,0 +1,29 @@
+CTF Army Knife LOLBAS integration
+
+Includes the Living Off The Land Binaries, Scripts and Libraries catalogue from
+the LOLBAS Project (https://lolbas-project.github.io), curated by the LOLBAS
+Project and its contributors.
+LOLBAS is licensed under the GNU General Public License, version 3.
+https://github.com/LOLBAS-Project/LOLBAS
+
+vendor/lolbas/ is a pinned, unmodified copy of the upstream yml/ entries and
+the upstream LICENSE and NOTICE.md (see integration/lolbas/upstream.json for
+the exact commit). The deprecated Archive-Old-Version/ tree is not included.
+apps/web/lib/tools/lolbas/data.generated.ts is derived from them by
+scripts/lolbas.mjs; entry text, commands and links are preserved verbatim.
+
+Community modifications: the search and browsing interface is reimplemented in
+the CTF Army Knife design system, with privilege requirements grouped for
+filtering and command placeholders expanded to the same example values the
+official site uses, optionally replaced by user-supplied URLs, paths and
+commands. These modifications do not imply any endorsement by the original
+authors.
+
+The upstream NOTICE.md, including its terms of use, disclaimers and the MITRE
+ATT&CK(R) licence acknowledgement, accompanies this distribution at
+vendor/lolbas/NOTICE.md. Microsoft(R) Windows(R) is a registered trademark of
+the Microsoft Corporation.
+
+The upstream GPL-3.0 LICENSE accompanies this distribution at
+vendor/lolbas/LICENSE. CTF Army Knife as a whole is distributed under GPL-3.0
+(see the LICENSE file at the repository root).
