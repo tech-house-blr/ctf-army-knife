@@ -4,9 +4,9 @@ from typing import Literal
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from sigma.collection import SigmaCollection
-from sigma.backends.splunk import SplunkBackend
 from sigma.backends.elasticsearch import LuceneBackend
+from sigma.backends.splunk import SplunkBackend
+from sigma.collection import SigmaCollection
 
 router = APIRouter(prefix="/api/sigma", tags=["sigma"])
 MAX_RULE_BYTES = 64 * 1024
