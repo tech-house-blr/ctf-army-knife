@@ -13,13 +13,23 @@ export type Tool = {
     title: string;
     icon: IconName;
     description: string;
-    category: "crypto" | "encoding" | "forensics" | "stego" | "exploitation";
+    category: "blue-team" | "crypto" | "encoding" | "forensics" | "stego" | "exploitation";
     status: "ready" | "planned";
     /** True when the tool calls the Python API in apps/api. */
     needsApi?: boolean;
 };
 
 export const tools: readonly Tool[] = [
+    {
+        slug: "sigma-shift",
+        name: "Sigma Shift",
+        title: "Sigma",
+        icon: "layers",
+        description: "Translate Sigma detection rules into Splunk SPL or Elasticsearch queries with pySigma.",
+        category: "blue-team",
+        status: "ready",
+        needsApi: true,
+    },
     {
         slug: "cryptogram-solver",
         name: "Cryptogram Solver",
@@ -91,6 +101,7 @@ export const toolHref = (tool: Tool) => `/${tool.slug}`;
 
 /** Display names for categories, in the order they appear in navigation. */
 export const categories: readonly { id: Tool["category"]; label: string }[] = [
+    { id: "blue-team", label: "Blue Team" },
     { id: "crypto", label: "Crypto" },
     { id: "encoding", label: "Encoding" },
     { id: "stego", label: "Steganography" },
