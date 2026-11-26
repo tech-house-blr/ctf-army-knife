@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from sigma.backends.elasticsearch import LuceneBackend
 from sigma.backends.splunk import SplunkBackend
 from sigma.collection import SigmaCollection
+from sigma.correlations import SigmaCorrelationRule
 
 router = APIRouter(prefix="/api/sigma", tags=["sigma"])
 MAX_RULE_BYTES = 64 * 1024
@@ -41,6 +42,11 @@ def convert_rule(request: ConvertRequest) -> ConvertResponse:
 
     if not collection.rules:
         raise HTTPException(status_code=422, detail="The input does not contain a convertible Sigma rule.")
+    if any(isinstance(rule, SigmaCorrelationRule) for rule in collection.rules):
+        raise HTTPException(
+            status_code=422,
+            detail="Sigma correlation rules do not contain a detection block and cannot be converted by this endpoint.",
+        )
 
     label, backend_type = BACKENDS[request.target]
     try:

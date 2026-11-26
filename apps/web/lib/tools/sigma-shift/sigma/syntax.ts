@@ -1,6 +1,6 @@
 import vocabulary from "./vocabulary.json";
 
-export const sigmaPattern = new RegExp(`#\\s*[^\\n]*|"(?:\\\\.|[^"\\\\])*"|'(?:\\\\.|[^'\\\\])*'|^[ \\t]*[\\w-]+(?=:)|\\|[\\w-]+|\\b(?:${vocabulary.conditionWords.join("|")}|${vocabulary.conditionPrefixes.join("|")}(?:_[\\w]+)?)\\b|\\b(?:${vocabulary.levels.join("|")})\\b|\\b\\d+(?:\\.\\d+)?\\b`, "gi");
+export const sigmaPattern = new RegExp(`#\\s*[^\\n]*|"(?:\\\\.|[^"\\\\])*"|'(?:\\\\.|[^'\\\\])*'|^[ \\t]*[\\w-]+(?=:)|\\|[\\w-]+|\\b(?:${vocabulary.conditionWords.join("|")}|${vocabulary.conditionPrefixes.join("|")}(?:_[\\w]+)?)\\b|\\b(?:${vocabulary.levels.join("|")})\\b|\\b\\d+(?:\\.\\d+)?\\b`, "gim");
 
 export function classifySigmaToken(token: string) {
     if (token.startsWith("#")) return "code-token-comment";
