@@ -1,0 +1,5 @@
+{
+  "source": "https://www.elastic.co/docs/explore-analyze/query-filter/languages/lucene-query-syntax",
+  "booleanOperators": ["AND", "OR", "NOT", "TO"],
+  "rangeKeywords": ["TO"]
+}

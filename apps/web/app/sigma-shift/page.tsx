@@ -2,13 +2,14 @@
 
 import { useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import CodeEditor from "@/components/code-editor";
 import PageHeader, { ToolPage } from "@/components/page-header";
 
 const starterRule = `title: Suspicious PowerShell Download\nstatus: test\nlogsource:\n  product: windows\n  category: process_creation\ndetection:\n  selection:\n    Image|endswith: \\powershell.exe\n    CommandLine|contains: DownloadString\n  condition: selection\n`;
 
 type Result = { target: string; query: string; title?: string | null; rule_count: number };
 
-export default function SigmaConverterPage() {
+export default function SigmaShiftPage() {
     const [rule, setRule] = useState(starterRule);
     const [target, setTarget] = useState("splunk");
     const [result, setResult] = useState<Result | null>(null);
@@ -55,39 +56,36 @@ export default function SigmaConverterPage() {
     return (
         <ToolPage>
             <PageHeader slug="sigma-shift" />
-                        <form onSubmit={convert} className="mt-5">
-                <section className="panel overflow-hidden">
-                    <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
-                        <div>
-                            <h2 className="font-medium">Detection rule</h2>
-                            <p className="text-xs text-fg-3">Sigma YAML · maximum 64 KB</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <input ref={fileInput} type="file" accept=".yml,.yaml,text/yaml,text/plain" onChange={loadFile} className="sr-only" />
-                            <button type="button" onClick={() => fileInput.current?.click()} className="btn min-h-9 px-3 text-sm">Open YAML</button>
-                            <button type="button" onClick={() => { setRule(""); setResult(null); setError(""); }} className="btn btn-quiet min-h-9 px-3 text-sm">Clear</button>
-                        </div>
-                    </header>
-                    <label htmlFor="sigma-rule" className="sr-only">Sigma rule YAML</label>
-                    <textarea id="sigma-rule" value={rule} onChange={(event) => { setRule(event.target.value); setResult(null); }} spellCheck={false} autoCapitalize="off" autoCorrect="off" className="field min-h-80 w-full resize-y rounded-none border-0 bg-inset px-4 py-4 font-mono text-sm leading-relaxed focus-visible:outline-offset-[-2px] sm:px-5" placeholder="Paste a Sigma rule here…" />
-                    <footer className="flex flex-col gap-4 border-t border-line px-4 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-5">
-                        <div className="w-full sm:max-w-xs">
-                            <label htmlFor="sigma-target" className="field-label">Query target</label>
-                            <select id="sigma-target" value={target} onChange={(event) => { setTarget(event.target.value); setResult(null); }} className="field">
-                                <option value="splunk">Splunk SPL</option>
-                                <option value="elasticsearch">Elasticsearch Lucene</option>
-                            </select>
-                        </div>
-                        <button type="submit" disabled={!rule.trim() || busy} aria-busy={busy} className="btn btn-primary w-full sm:w-auto">{busy ? "Converting…" : "Convert rule"}</button>
-                    </footer>
-                </section>
+            <form onSubmit={convert} className="panel mt-5 grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_17rem]">
+                <div className="flex min-w-0 flex-col">
+                    <div className="mb-2 flex min-h-7 flex-wrap items-center justify-between gap-2">
+                        <label htmlFor="sigma-rule" className="field-label mb-0">Sigma rule</label>
+                        <span className="text-xs text-fg-3">YAML · max 64 KB</span>
+                    </div>
+                    <div className="code-editor-frame min-w-0 overflow-hidden rounded-lg border-2 border-signal">
+                        <CodeEditor value={rule} onChange={(value) => { setRule(value); setResult(null); }} language="sigma" label="Sigma rule YAML" minHeight="20rem" />
+                    </div>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                    <div>
+                        <label htmlFor="sigma-target" className="field-label">Query target</label>
+                        <select id="sigma-target" value={target} onChange={(event) => { setTarget(event.target.value); setResult(null); }} className="field">
+                            <option value="splunk">Splunk SPL</option>
+                            <option value="elasticsearch">Elasticsearch Lucene</option>
+                        </select>
+                    </div>
+                    <input ref={fileInput} type="file" accept=".yml,.yaml,text/yaml,text/plain" onChange={loadFile} className="sr-only" />
+                    <button type="button" onClick={() => fileInput.current?.click()} className="btn w-full">Open YAML rule</button>
+                    <button type="button" onClick={() => { setRule(""); setResult(null); setError(""); }} className="btn w-full">Clear rule</button>
+                    <button type="submit" disabled={!rule.trim() || busy} aria-busy={busy} className="btn btn-primary mt-auto w-full">{busy ? "Converting…" : "Convert rule"}</button>
+                    {error && <p role="alert" className="error-text">{error}</p>}
+                </div>
             </form>
 
-            {error && <p role="alert" className="error-text mt-4 rounded-md border border-line px-4 py-3">{error}</p>}
-
             {result && (
-                <section className="panel mt-5 overflow-hidden" aria-live="polite" aria-labelledby="sigma-result-heading">
-                    <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
+                <section className="panel mt-5 p-5" aria-live="polite" aria-labelledby="sigma-result-heading">
+                    <header className="mb-3 flex flex-wrap items-center justify-between gap-3">
                         <div>
                             <h2 id="sigma-result-heading" className="font-medium">{result.title || "Converted query"}</h2>
                             <p className="text-xs text-fg-3">{result.target} · {result.rule_count} rule{result.rule_count === 1 ? "" : "s"}</p>
@@ -97,7 +95,9 @@ export default function SigmaConverterPage() {
                             <a href={`data:text/plain;charset=utf-8,${encodeURIComponent(result.query)}`} download="sigma-query.txt" className="btn min-h-9 px-3 text-sm">Download</a>
                         </div>
                     </header>
-                    <pre className="max-h-120 overflow-auto bg-inset p-4 font-mono text-sm leading-relaxed whitespace-pre-wrap wrap-break-word sm:p-5">{result.query}</pre>
+                    <div className="code-editor-frame min-w-0 overflow-hidden rounded-lg border-2 border-signal">
+                        <CodeEditor value={result.query} language={result.target === "Splunk SPL" ? "splunk" : "elastic-lucene"} label={`Converted ${result.target} query`} minHeight="12rem" readOnly />
+                    </div>
                 </section>
             )}
         </ToolPage>

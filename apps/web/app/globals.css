@@ -38,6 +38,14 @@
     --signal-soft: rgba(61, 220, 91, 0.1);
     --on-signal: #06140b;
     --danger: #ef7d70;
+    --code-key: #82aee8;
+    --code-modifier: #c9c27a;
+    --code-logic: #e98f6a;
+    --code-string: #93c77f;
+    --code-command: #6cc2b0;
+    --code-operator: #e3b768;
+    --code-field: #b9c3cf;
+    --code-number: #c7a0e8;
     --brand-roof: #ffffff; /* logo roof and wordmark tones per theme */
     --brand-ink: #a6a6a6;
     --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 1px 2px rgba(0, 0, 0, 0.35);
@@ -61,6 +69,14 @@
     --signal-soft: rgba(22, 102, 42, 0.09);
     --on-signal: #ffffff;
     --danger: #b3261e;
+    --code-key: #1f4f8a;
+    --code-modifier: #5b5a1c;
+    --code-logic: #9c3b0f;
+    --code-string: #2d6a2a;
+    --code-command: #0b6157;
+    --code-operator: #7a4f00;
+    --code-field: #2c3e50;
+    --code-number: #69428d;
     --brand-roof: #17181a;
     --brand-ink: #17181a;
     --shadow: 0 1px 2px rgba(20, 20, 20, 0.06);
@@ -174,6 +190,21 @@
     input[type="checkbox"] { accent-color: var(--signal); }
 
     .error-text { color: var(--danger); font-size: 0.9333rem; }
+
+    /* Lightweight syntax colors used by Sigma Shift's overlay editor. */
+    .code-editor-highlight { color: var(--fg); pointer-events: none; }
+    .code-editor-input { color: transparent; -webkit-text-fill-color: transparent; caret-color: var(--fg); }
+    .code-editor-input::selection { color: transparent; -webkit-text-fill-color: transparent; background: var(--signal-soft); }
+    .code-token-key { color: var(--code-key); }
+    .code-token-modifier { color: var(--code-modifier); }
+    .code-token-logic { color: var(--code-logic); }
+    .code-token-string { color: var(--code-string); }
+    .code-token-command { color: var(--code-command); }
+    .code-token-operator { color: var(--code-operator); }
+    .code-token-field { color: var(--code-field); }
+    .code-token-number { color: var(--code-number); }
+    .code-token-value { color: var(--code-logic); }
+    .code-token-comment, .code-token-placeholder { color: var(--fg-3); }
 
     /* CyberChef page: the workspace fills the viewport under its header. */
     .chef-shell { display: flex; flex-direction: column; height: 100dvh; min-height: 560px; }
