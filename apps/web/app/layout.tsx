@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import Sidebar from "@/components/sidebar";
 import { RAIL_STORAGE_KEY } from "@/lib/rail";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
@@ -19,7 +20,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     return (
         <html lang="en" suppressHydrationWarning>
             <head>
-                <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+                <Script id="prepaint-settings" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeScript }} />
                 <link rel="preload" href="/fonts/bbh-hegarty.ttf" as="font" type="font/ttf" crossOrigin="" />
                 <link rel="preload" href="/fonts/ibm-plex-sans-400.woff2" as="font" type="font/woff2" crossOrigin="" />
                 <link rel="preload" href="/fonts/ibm-plex-sans-500.woff2" as="font" type="font/woff2" crossOrigin="" />

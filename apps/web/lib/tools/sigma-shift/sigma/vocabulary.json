@@ -1,0 +1,5 @@
+{
+  "conditionWords": ["and", "or", "not", "all", "of", "them"],
+  "conditionPrefixes": ["selection", "filter"],
+  "levels": ["critical", "high", "medium", "low", "informational", "test", "stable", "experimental", "deprecated", "true", "false", "null"]
+}

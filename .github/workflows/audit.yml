@@ -35,4 +35,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-      - run: pipx run pip-audit --requirement apps/api/requirements-dev.txt
+      # pySigma currently requires diskcache 5.6.3, for which no patched release
+      # is available. Its vulnerable cache is only used by optional MITRE ATT&CK
+      # data helpers; this API does not import or call those helpers.
+      - run: pipx run pip-audit --requirement apps/api/requirements-dev.txt --ignore-vuln PYSEC-2026-2447
